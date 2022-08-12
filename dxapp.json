@@ -1,0 +1,89 @@
+{
+    "name": "push_to_decipher",
+    "title": "push_to_decipher",
+    "summary": "Takes patient and variant information and pushes into DECIPHER",
+    "dxapi": "1.0.0",
+    "version": "1.0.0",
+    "properties": {
+      "githubRelease": "v1.0.0"
+    },
+    "inputSpec": [
+        {
+        "name": "patient_json",
+        "label": "patient_json",
+        "help": "JSON containing patient data",
+        "class": "file",
+        "patterns": ["*.json"],
+        "optional": true
+        },
+        {
+        "name": "variant_json",
+        "label": "variant_json",
+        "help": "JSON containing variant data",
+        "class": "file",
+        "patterns": ["*.json"],
+        "optional": true
+        },
+        {
+        "name": "person_id",
+        "label": "person_id",
+        "help": "ID for person record on DECIPHER to add variant to",
+        "class": "file",
+        "patterns": ["*"],
+        "optional": true
+        },
+        {
+        "name": "api_keys",
+        "label": "DECIPHER API keys",
+        "help": "Link to file containing client and user keys",
+        "class": "file",
+        "default": {"$dnanexus_link": "file-GFk6F78462ZvQ46K8xKX5z61"},
+        "patterns": ["*.json"],
+        "optional": false
+        }
+    ],
+    "outputSpec": [
+      {
+        "name": "output",
+        "label": "Output",
+        "class": "file",
+        "optional": true,
+        "patterns": [
+          "*"
+        ],
+        "help": ""
+      }
+    ],
+    "runSpec": {
+      "distribution": "Ubuntu",
+      "release": "20.04",
+      "version": "0",
+      "interpreter": "bash",
+      "file": "src/push_to_decipher.sh",
+      "timeoutPolicy": {
+        "*": {
+          "hours": 1
+        }
+      }
+    },
+    "developers":[
+      "org-emee_1"
+    ],
+    "authorizedUsers": [
+      "org-emee_1"
+    ],
+    "access": {
+      "project": "CONTRIBUTE",
+      "network": ["*"],
+      "allProjects": "VIEW"
+    },
+    "regionalOptions": {
+      "aws:eu-central-1": {
+        "systemRequirements": {
+          "*": {
+            "instanceType": "mem1_ssd1_v2_x4"
+          }
+        }
+      }
+    }
+  }
