@@ -1,8 +1,4 @@
 #!/usr/bin/env python3
-from curses.ascii import US
-from decimal import Clamped
-from re import A
-from typing import KeysView
 import requests                         # This is needed to talk to the API
 import json                             # Need this to format response
 import argparse                         # To parse command line arguments
