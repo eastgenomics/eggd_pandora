@@ -17,6 +17,7 @@ parser = argparse.ArgumentParser(description="Just an example",
 
 parser.add_argument("-p", "--patient", help="patient data in JSON file")
 parser.add_argument("-v", "--variant", help="variant data in JSON file")
+parser.add_argument("-f", "--family", help="family data in JSON file")
 parser.add_argument("-k", "--configuration", help="variant data in JSON file")
 
 args = parser.parse_args()
@@ -37,9 +38,9 @@ headers = {
     "X-Auth-Token-Account": USER_KEY
 }
 
-
-with open('/home/dnanexus/SAP-56130-1-payload.json') as input_fam_json:
-    fam_json = json.load(input_fam_json)
+family_information_json = args.family
+with open(family_information_json, 'r') as f:
+    fam_json = json.load(f)
 
 
 #print(fam_json["interpretation_request_data"]["json_request"]["pedigree"]["members"])

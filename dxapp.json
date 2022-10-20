@@ -40,6 +40,15 @@
         "default": {"$dnanexus_link": "file-GFk6F78462ZvQ46K8xKX5z61"},
         "patterns": ["*.json"],
         "optional": false
+        },
+        {
+        "name": "family_information_json",
+        "label": "Patient and family JSON",
+        "help": "JSON containing patient data and data about the patient's family",
+        "class": "file",
+        "default": {"$dnanexus_link": "file-GJ8Q9vQ4fbKVx4gY4fKBx7X0"},
+        "patterns": ["*.json"],
+        "optional": false
         }
     ],
     "outputSpec": [
