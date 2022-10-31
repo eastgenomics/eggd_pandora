@@ -25,14 +25,6 @@
         "optional": true
         },
         {
-        "name": "person_id",
-        "label": "person_id",
-        "help": "ID for person record on DECIPHER to add variant to",
-        "class": "file",
-        "patterns": ["*"],
-        "optional": true
-        },
-        {
         "name": "api_keys",
         "label": "DECIPHER API keys",
         "help": "Link to file containing client and user keys",
@@ -48,6 +40,15 @@
         "class": "file",
         "default": {"$dnanexus_link": "file-GJ8Q9vQ4fbKVx4gY4fKBx7X0"},
         "patterns": ["*.json"],
+        "optional": false
+        },
+        {
+        "name": "patient_vcf_EH",
+        "label": "Patient a.vcf ",
+        "help": "VCF containing patient data and data about the patient's family, processed with Expansion Hunter",
+        "class": "file",
+        "default": {"$dnanexus_link": "file-GJ787384XjQ43VBB575xKkX3"},
+        "patterns": ["*.vcf.gz"],
         "optional": false
         }
     ],
