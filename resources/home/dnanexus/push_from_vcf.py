@@ -109,6 +109,7 @@ def create_family_in_decipher():
     response_json = json.loads(response.text)
     print(response_json)
     patient_id = response_json['data'][0]['id']
+    create_family_in_decipher.patient_person_id = response_json['data'][0]['relationships']['People']['data'][0]['id']
     # Add parents
     # Mother is created first, so indexed at [1]
     mother_id = response_json['data'][0]['relationships']['People']['data'][1]['id']
@@ -144,12 +145,11 @@ def create_family_in_decipher():
     response = requests.request("PATCH", api_url + people_url + '/' + str(father_id), data=father_json, headers=headers)
     print(response.text)
 
-patient_vcf_EH = args.patient_vcf_EH
-
-def submit_patient_vcf():
+def submit_patient_vcf(person_id):
     '''
     Add variants from a vcf to an existing patient in DECIPHER
     '''
+    patient_vcf_EH = args.patient_vcf_EH
     patient_vcf = vcf.Reader(open(patient_vcf_EH))
     patient_id = patient_vcf.samples
     patient_id = patient_id[0]
@@ -178,7 +178,7 @@ def submit_patient_vcf():
                 {
                 "type": "Variant",
                 "attributes": {
-                    "person_id": 681378,
+                    "person_id": person_id,
                     "variant_class": "duplication",
                     "assembly": "GRCh38",
                     "chr": str(record.CHROM).replace("chr", ""),
@@ -215,7 +215,10 @@ def submit_patient_vcf():
         #     response = requests.request("POST", api_url + variant_url, data=variant_json, headers=headers)
         print(response.text)
 
-submit_patient_vcf()
+if args.family and args.patient_vcf_EH:
+    create_family_in_decipher()
+    patient_person_id = create_family_in_decipher.patient_person_id
+    submit_patient_vcf(patient_person_id)
 
 # Make a relative json
 # relation_dict = {"data":
