@@ -1,9 +1,26 @@
 # Import ClientConfiguration and OpencgaClient class
 from pyopencga.opencga_config import ClientConfiguration
 from pyopencga.opencga_client import OpencgaClient
-from config import USER, PASSWORD
 import json
+import argparse
 import pandas as pd
+
+parser = argparse.ArgumentParser(description="Just an example",
+                                 formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+
+parser.add_argument("-k", "--configuration", help="OpenCGA login")
+
+args = parser.parse_args()
+print(args)
+
+# Extract and open JSON file containing OpenCGA login data
+login_details = args.configuration
+with open(login_details, 'r') as f:
+    datastore = json.load(f)
+
+# Retrieve keys from JSON 
+USER = datastore["USER"]
+PASSWORD = datastore["PASSWORD"]
 
 # Create an instance of OpencgaClient passing the configuration
 config = ClientConfiguration(
@@ -59,13 +76,12 @@ case_ids = []
 for case in oc.clinical.search(study=study, include='id').result_iterator():
     case_ids.append(case['id'])
 
-## Uncomment for printing the list with all the case ids
-# print(case_ids)
+print('There are {} cases in study {}'.format(len(case_ids), study))
 
 ## Select a random case from the list
 import random
 if case_ids != []:
-    print('There are {} cases in study {}'.format(len(case_ids), study))
+    
     selected_case = random.choice(case_ids)
     print('Case selected for analysis is {}'.format(selected_case))
 else:
@@ -73,59 +89,61 @@ else:
 
 selected_case="SAP-56130-1"
 
+def extract_interpreted_variants(case):
+    '''
+    For a given case, extract the variants in open CGA under the most recent
+    interpretation.
+    '''
+    ## Query using the clinical info web service
+    interpretation_info = oc.clinical.info(clinical_analysis=selected_case, study=study)
+    interpretation_info.print_results(fields='id,interpretation.id,type,proband.id')
 
-## Query using the clinical info web service
-interpretation_info = oc.clinical.info(clinical_analysis=selected_case, study=study)
-interpretation_info.print_results(fields='id,interpretation.id,type,proband.id')
+    ## Select interpretation object 
+    interpretation_object = interpretation_info.get_results()[0]['interpretation']
 
-## Select interpretation object 
-interpretation_object = interpretation_info.get_results()[0]['interpretation']
+    ## Select interpretation id 
+    interpretation_id = interpretation_info.get_results()[0]['interpretation']['id']
 
-## Select interpretation id 
-interpretation_id = interpretation_info.get_results()[0]['interpretation']['id']
+    ## Uncomment next line to display an interactive JSON viewer
+    # JSON(interpretation_object)
 
-## Uncomment next line to display an interactive JSON viewer
-# JSON(interpretation_object)
-
-print('The interpretation id for case {} is {}'.format(selected_case, interpretation_object['id'] ))
-
-
-
-## Perform the query
-variants_reported = oc.clinical.info_interpretation(interpretations=interpretation_id, study=study)
-
-## Define empty list to store the variants, genes and the tiering
-variant_list = []
-gene_id_list=[]
-genename_list=[]
-tier_list =[]
+    print('The interpretation id for case {} is {}'.format(selected_case, interpretation_object['id'] ))
 
 
-for variant in variants_reported.get_results()[0]['primaryFindings']:
-    print(variant)
-    variant_id = variant['id']
-    variant_list.append(variant_id)
-    gene_id = variant['evidences'][0]['genomicFeature']['id']
-    gene_id_list.append(gene_id)
-    gene_name = variant['evidences'][0]['genomicFeature']['geneName']
-    genename_list.append(gene_name)
-    tier = variant['evidences'][0]['classification']['tier']
-    tier_list.append(tier)
 
-print(variant_list)
-## Construct a Dataframe and return the first 5 rows
-df = pd.DataFrame(data = {'variant_id':variant_list, 'gene_id':gene_id_list, 'gene_name':genename_list, 'tier': tier_list})
-df.head()
-print(df)
+    ## Perform the query
+    variants_reported = oc.clinical.info_interpretation(interpretations=interpretation_id, study=study)
 
-## make a dictionary
-data_dict = {'variant_id':variant_list, 'gene_id':gene_id_list, 'gene_name':genename_list, 'tier': tier_list}
+    ## Define empty list to store the variants, genes and the tiering
+    variant_list = []
+    for variant in variants_reported.get_results()[0]['primaryFindings']:
+        print(variant)
+        variant_id = variant['id']
+
+        gene_id = variant['evidences'][0]['genomicFeature']['id']
+
+        gene_name = variant['evidences'][0]['genomicFeature']['geneName']
+
+        variant_type = variant['type']
+
+        heterozygosity = variant['studies'][0]['samples'][0]['data'][0]
+
+        data_dict = {'variant_id':variant_id,
+                    'gene_id':gene_id,
+                    'gene_name':gene_name,
+                    'type': variant_type,
+                    'heterozygosity': heterozygosity}
+        variant_list.append(data_dict)
+
+    print(variant_list)
+    variant_dict = {}
+    variant_dict["variants"] = variant_list
+
+    with open('data.json', 'w', encoding='utf-8') as f:
+        json.dump(variant_list, f, ensure_ascii=False, indent=4)
 
 
-variant_json = json.dumps(data_dict)
-
-with open('data.json', 'w', encoding='utf-8') as f:
-    json.dump(data_dict, f, ensure_ascii=False, indent=4)
+extract_interpreted_variants(selected_case)
 
 # family_response = oc.families.search(study='emee-glh@decipher_project:rare_disease_38', families='SAP-56130-1', limit=5)
 # print(family_response.get_results())

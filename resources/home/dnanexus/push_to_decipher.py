@@ -19,6 +19,7 @@ parser = argparse.ArgumentParser(description="Just an example",
 parser.add_argument("-p", "--patient", help="patient data in JSON file")
 parser.add_argument("-v", "--variant", help="variant data in JSON file")
 parser.add_argument("-k", "--configuration", help="variant data in JSON file")
+parser.add_argument("-f", "--family", help="family data in JSON file")
 
 args = parser.parse_args()
 print(args)
@@ -81,7 +82,6 @@ def create_family_in_decipher():
                 mother_affected_status = "unknown"
             else:
                 print("Could not detemine affected status of mother")
-            mother_sample_id = member.get('samples')[0]['sampleId']
 
         if member.get('additionalInformation')['relation_to_proband']== "Father":
             if member.get('affectionStatus') == "AFFECTED":
@@ -92,7 +92,6 @@ def create_family_in_decipher():
                 father_affected_status = "unknown"
             else:
                 print("Could not detemine affected status of father")
-            father_sample_id = member.get('samples')[0]['sampleId']
 
     # Make a patient json
     attribute_dict = {'contact_account_id': 4812, 'chromosomal_sex': proband_sex, 'has_aneuploidy': False, 'clinical_reference': proband_id, 'has_consent': False}
@@ -107,7 +106,23 @@ def create_family_in_decipher():
     response = requests.request("POST", api_url + patient_url, data=patient_json, headers=headers)
     response_json = json.loads(response.text)
     print(response_json)
-    patient_id = response_json['data'][0]['id']
+    if 'errors' in response_json.keys():
+        if response_json['errors'][0]['detail'] == 'Clinical reference must be unique within the project':
+            print(
+                'Clinical reference must be unique within the project.'
+                f'A patient with the local clinical reference number {proband_id}'
+                ' already exists in decipher'
+                )
+            updated_response = requests.request("GET", api_url + patient_url, headers=headers)
+            updated_response_json = json.loads(updated_response.text)
+            print(updated_response_json)
+            for patient in updated_response_json['data']:
+                if patient['attributes']['clinical_reference'] == proband_id:
+                    person_response = requests.request("GET", api_url + patient_url + '/' + patient['id'] + '/people', headers=headers)
+                    print(person_response.text)
+                    person_response_json = json.loads(person_response.text)
+                    create_family_in_decipher.patient_person_id = person_response_json["data"][0]["id"]
+        return
     create_family_in_decipher.patient_person_id = response_json['data'][0]['relationships']['People']['data'][0]['id']
     # Add parents
     # Mother is created first, so indexed at [1]
@@ -145,28 +160,59 @@ def create_family_in_decipher():
     print(response.text)
 
 def submit_variants_from_opencga(person_id):
-    variant_json = args.variant
+    '''
+    Reformat the variants from OpenCGA to be submitted to DECIPHER
+    '''
+    var_json = args.variant
+    with open(var_json, 'r') as f:
+        variant_json = json.load(f)
+
     print(variant_json)
-    variant_dict = {"data":
-    {
-    "type": "Variant",
-    "attributes": {
-        "person_id": person_id,
-        "variant_class": "sequence_variant",
-        "assembly": "GRCh38",
-        "chr": variant_json["variant_id"].split(":")[0],
-        "start": variant_json["variant_id"].split(":")[1],
-        "ref_sequence": variant_json["variant_id"].split(":")[2],
-        "alt_sequence": variant_json["variant_id"].split(":")[3],
-        "inheritance": "unknown",
-        "genotype": "heterozygous",
-        "can_be_public": False,
-        }
-    }
-}
-    variant_json_to_submit = json.dumps(variant_dict)
-    response = requests.request("POST", api_url + variant_url, data=variant_json_to_submit, headers=headers)
-    print(response)
+    variant_dict_list = []
+    for variant in variant_json:
+        print(variant)
+        print(variant["type"])
+        heterozygosity = None
+        variant_type = None
+        if variant["heterozygosity"] == "0/1":
+            heterozygosity = "heterozygous"
+        elif variant["heterozygosity"] == "1/1":
+            heterozygosity = "homozygous"
+        else:
+            print("Could not determine heterozygosity")
+
+        if variant["type"] == "SNV":
+            variant_type = "sequence_variant"
+        else:
+            print ("could not determine variant type")
+        
+        if variant_type and heterozygosity is not None:
+            variant_dict_list.append(
+                {"data":
+                    {
+                    "type": "Variant",
+                    "attributes": {
+                        "person_id": person_id,
+                        "variant_class": variant_type,
+                        "assembly": "GRCh38",
+                        "chr": variant["variant_id"].split(":")[0],
+                        "start": variant["variant_id"].split(":")[1],
+                        "ref_sequence": variant["variant_id"].split(":")[2],
+                        "alt_sequence": variant["variant_id"].split(":")[3],
+                        "inheritance": "unknown",
+                        "genotype": heterozygosity,
+                        "can_be_public": False,
+                        }
+                    }
+                }
+        )
+
+    print (variant_dict_list)
+    for variant_dict in variant_dict_list:
+        print(variant_dict)
+        variant_json_to_submit = json.dumps(variant_dict)
+        response = requests.request("POST", api_url + variant_url, data=variant_json_to_submit, headers=headers)
+        print(response.text)
 
 if args.family and args.variant:
     create_family_in_decipher()

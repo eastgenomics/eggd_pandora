@@ -18,19 +18,20 @@
         "optional": false
         },
         {
+        "name": "opencga_config",
+        "label": "OpenCGA configuration",
+        "help": "Link to file containing use identification",
+        "class": "file",
+        "default": {"$dnanexus_link": "file-GKQgxp0462ZvY6zx2QY76jbg"},
+        "patterns": ["*.json"],
+        "optional": false
+        },
+        {
         "name": "family_information_json",
         "label": "Patient and family JSON",
         "help": "JSON containing patient data and data about the patient's family",
         "class": "file",
         "patterns": ["*.json"],
-        "optional": true
-        },
-        {
-        "name": "patient_vcf_EH",
-        "label": "Patient a.vcf ",
-        "help": "VCF containing patient data and data about the patient's family, processed with Expansion Hunter",
-        "class": "file",
-        "patterns": ["*.vcf.gz"],
         "optional": true
         }
     ],
