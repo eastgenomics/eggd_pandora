@@ -218,25 +218,3 @@ if args.family and args.variant:
     create_family_in_decipher()
     patient_person_id = create_family_in_decipher.patient_person_id
     submit_variants_from_opencga(patient_person_id)
-
-# # Get patients
-#response = requests.request("GET", api_url + patient_url +'/486637', headers=headers)
-
-# Get people
-# response = requests.request("GET", api_url + patient_url + '/' + '482899' + '/' + people_url, headers=headers)
-
-# patient_json = args.patient
-# print(patient_json)
-
-# variant_json = args.variant
-# print(variant_json)
-
-# # Need to create a patient first
-# response = requests.request("POST", api_url + patient_url, data=open(patient_json, 'rb'), headers=headers)
-
-# # Add some variants to our new patient
-# #response = requests.request("POST", api_url + variant_url, data=json.dumps(variant_data), headers=headers)
-
-# # Retreive variant for a specific aptient
-# #response = requests.request("GET", api_url + people_url + '/660113/variants', headers=headers)
-# print(response.text)
