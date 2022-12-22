@@ -11,6 +11,7 @@ api_url = "https://www.deciphergenomics.org/api/"
 patient_url = "patients"
 people_url = "people"
 variant_url = "variants"
+phenotype_url = "phenotypes"
 
 
 parser = argparse.ArgumentParser(description="Just an example",
@@ -20,6 +21,7 @@ parser.add_argument("-p", "--patient", help="patient data in JSON file")
 parser.add_argument("-v", "--variant", help="variant data in JSON file")
 parser.add_argument("-k", "--configuration", help="variant data in JSON file")
 parser.add_argument("-f", "--family", help="family data in JSON file")
+parser.add_argument("-c", "--case", help="case data in JSON file")
 
 args = parser.parse_args()
 print(args)
@@ -159,6 +161,68 @@ def create_family_in_decipher():
     response = requests.request("PATCH", api_url + people_url + '/' + str(father_id), data=father_json, headers=headers)
     print(response.text)
 
+def create_individual_in_decipher():
+    
+    cases_json = args.case
+    with open(cases_json, 'r') as f:
+        cases = json.load(f)
+
+    for case in cases:
+        print(case)
+        proband_id = case['clinical_reference']
+        attribute_dict = {
+            'contact_account_id': 4812,
+            'chromosomal_sex': case['sex'],
+            'has_aneuploidy': False,
+            'clinical_reference': case['clinical_reference'],
+            'has_consent': False
+            }
+        
+        patient_dict = {"data":
+            {
+            "type": "Patient",
+            "attributes": attribute_dict
+            }
+        }
+
+        patient_json=json.dumps(patient_dict)
+
+        response = requests.request("POST", api_url + patient_url, data=patient_json, headers=headers)
+        response_json = json.loads(response.text)
+        print(response_json)
+        if 'errors' in response_json.keys():
+            if response_json['errors'][0]['detail'] == 'Clinical reference must be unique within the project':
+                print(
+                    'Clinical reference must be unique within the project.'
+                    f'A patient with the local clinical reference number {proband_id}'
+                    ' already exists in decipher'
+                    )
+                updated_response = requests.request("GET", api_url + patient_url, headers=headers)
+                updated_response_json = json.loads(updated_response.text)
+                print(updated_response_json)
+                for patient in updated_response_json['data']:
+                    if patient['attributes']['clinical_reference'] == case['clinical_reference']:
+                        person_response = requests.request("GET", api_url + patient_url + '/' + patient['id'] + '/people', headers=headers)
+                        print(person_response.text)
+                        person_response_json = json.loads(person_response.text)
+                        create_individual_in_decipher.patient_person_id = person_response_json["data"][0]["id"]
+            return
+        create_individual_in_decipher.patient_person_id = response_json['data'][0]['relationships']['People']['data'][0]['id']
+        phenotypes_to_submit = []
+        if case['phenotype_list']:
+            for phenotype in case['phenotype_list']:
+                phenotypes_to_submit.append({
+                    "type": "Phenotype",
+                    "attributes": {
+                        "person_id": create_individual_in_decipher.patient_person_id,
+                        "hpo_term_id": phenotype,
+                        "is_present": True},
+                })
+            phen_response = requests.request("POST", api_url + phenotype_url, data=phenotypes_to_submit, headers=headers)
+            print(phen_response.text)
+    
+
+
 def submit_variants_from_opencga(person_id):
     '''
     Reformat the variants from OpenCGA to be submitted to DECIPHER
@@ -181,7 +245,7 @@ def submit_variants_from_opencga(person_id):
         else:
             print("Could not determine heterozygosity")
 
-        if variant["type"] == "SNV":
+        if variant["type"] in ["INDEL", "SNV"]:
             variant_type = "sequence_variant"
         else:
             print ("could not determine variant type")
@@ -214,7 +278,12 @@ def submit_variants_from_opencga(person_id):
         response = requests.request("POST", api_url + variant_url, data=variant_json_to_submit, headers=headers)
         print(response.text)
 
-if args.family and args.variant:
-    create_family_in_decipher()
-    patient_person_id = create_family_in_decipher.patient_person_id
-    submit_variants_from_opencga(patient_person_id)
+if args.case and args.variant:
+    create_individual_in_decipher()
+    #patient_person_id = create_individual_in_decipher.patient_person_id
+    #submit_variants_from_opencga(patient_person_id)
+
+# if args.family and args.variant:
+#     create_family_in_decipher()
+#     patient_person_id = create_family_in_decipher.patient_person_id
+#     submit_variants_from_opencga(patient_person_id)

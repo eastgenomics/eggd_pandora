@@ -78,16 +78,34 @@ for case in oc.clinical.search(study=study, include='id').result_iterator():
 
 print('There are {} cases in study {}'.format(len(case_ids), study))
 
-## Select a random case from the list
-import random
-if case_ids != []:
-    
-    selected_case = random.choice(case_ids)
-    print('Case selected for analysis is {}'.format(selected_case))
-else:
-    print('There are no cases in the study', study)
-
 selected_case="SAP-56130-1"
+
+def extract_case_information():
+    case_list = []
+    for individual in oc.individuals.search(study=study).result_iterator():
+        phenotype_list = []
+        if individual['disorders']:
+            print(individual['disorders'])
+            if individual['sex']['id'] == "MALE":
+                proband_sex = "46_xy"
+            if individual['sex']['id'] == "FEMALE":
+                proband_sex = "46_xx"
+
+            if individual['phenotypes']:
+                for phenotype in individual['phenotypes']:
+                    phenotype_list.append(phenotype['id'])
+        
+            case_dict = {
+                'sex': proband_sex,
+                'clinical_reference': individual['name'],
+                'phenotype_list': phenotype_list
+            }
+
+            case_list.append(case_dict)
+
+    with open('cases.json', 'w', encoding='utf-8') as f:
+        json.dump(case_list, f, ensure_ascii=False, indent=4)
+
 
 def extract_interpreted_variants(case):
     '''
@@ -117,15 +135,20 @@ def extract_interpreted_variants(case):
     ## Define empty list to store the variants, genes and the tiering
     variant_list = []
     for variant in variants_reported.get_results()[0]['primaryFindings']:
-        print(variant)
-        variant_id = variant['id']
+        variant_type = variant['type']
+        print(variant_type)
+    
+        if variant_type == "INDEL":
+            variant_id = variant['studies'][0]['files'][0]['call']['variantId']
+        elif variant_type == "SNV":
+            variant_id = variant['id']
+        else:
+            print("Could not determine variant type")
 
         gene_id = variant['evidences'][0]['genomicFeature']['id']
 
         gene_name = variant['evidences'][0]['genomicFeature']['geneName']
-
-        variant_type = variant['type']
-
+        
         heterozygosity = variant['studies'][0]['samples'][0]['data'][0]
 
         data_dict = {'variant_id':variant_id,
@@ -142,7 +165,7 @@ def extract_interpreted_variants(case):
     with open('data.json', 'w', encoding='utf-8') as f:
         json.dump(variant_list, f, ensure_ascii=False, indent=4)
 
-
+extract_case_information()
 extract_interpreted_variants(selected_case)
 
 # family_response = oc.families.search(study='emee-glh@decipher_project:rare_disease_38', families='SAP-56130-1', limit=5)
