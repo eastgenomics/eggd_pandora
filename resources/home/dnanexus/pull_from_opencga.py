@@ -69,17 +69,6 @@ variant_operations = oc.variant_operations
 
 study='emee-glh@decipher_project:rare_disease_38'
 
-## Define an empty list to keep the case ids:
-case_ids = []
-
-## Iterate over the cases and retrieve the ids:
-for case in oc.clinical.search(study=study, include='id').result_iterator():
-    case_ids.append(case['id'])
-
-print('There are {} cases in study {}'.format(len(case_ids), study))
-
-selected_case="SAP-56130-1"
-
 def extract_case_information():
     case_list = []
     for individual in oc.individuals.search(study=study).result_iterator():
@@ -107,66 +96,68 @@ def extract_case_information():
         json.dump(case_list, f, ensure_ascii=False, indent=4)
 
 
-def extract_interpreted_variants(case):
+def extract_interpreted_variants(case_list):
     '''
     For a given case, extract the variants in open CGA under the most recent
     interpretation.
     '''
-    ## Query using the clinical info web service
-    interpretation_info = oc.clinical.info(clinical_analysis=selected_case, study=study)
-    interpretation_info.print_results(fields='id,interpretation.id,type,proband.id')
-
-    ## Select interpretation object 
-    interpretation_object = interpretation_info.get_results()[0]['interpretation']
-
-    ## Select interpretation id 
-    interpretation_id = interpretation_info.get_results()[0]['interpretation']['id']
-
-    ## Uncomment next line to display an interactive JSON viewer
-    # JSON(interpretation_object)
-
-    print('The interpretation id for case {} is {}'.format(selected_case, interpretation_object['id'] ))
-
-
-
-    ## Perform the query
-    variants_reported = oc.clinical.info_interpretation(interpretations=interpretation_id, study=study)
-
-    ## Define empty list to store the variants, genes and the tiering
-    variant_list = []
-    for variant in variants_reported.get_results()[0]['primaryFindings']:
-        variant_type = variant['type']
-        print(variant_type)
-    
-        if variant_type == "INDEL":
-            variant_id = variant['studies'][0]['files'][0]['call']['variantId']
-        elif variant_type == "SNV":
-            variant_id = variant['id']
-        else:
-            print("Could not determine variant type")
-
-        gene_id = variant['evidences'][0]['genomicFeature']['id']
-
-        gene_name = variant['evidences'][0]['genomicFeature']['geneName']
-        
-        heterozygosity = variant['studies'][0]['samples'][0]['data'][0]
-
-        data_dict = {'variant_id':variant_id,
-                    'gene_id':gene_id,
-                    'gene_name':gene_name,
-                    'type': variant_type,
-                    'heterozygosity': heterozygosity}
-        variant_list.append(data_dict)
-
-    print(variant_list)
     variant_dict = {}
-    variant_dict["variants"] = variant_list
+    
+    for case in case_list:
+        ## Query using the clinical info web service
+        interpretation_info = oc.clinical.info(clinical_analysis=case, study=study)
+        interpretation_info.print_results(fields='id,interpretation.id,type,proband.id')
 
+        ## Select interpretation object 
+        interpretation_object = interpretation_info.get_results()[0]['interpretation']
+
+        ## Select interpretation id 
+        interpretation_id = interpretation_info.get_results()[0]['interpretation']['id']
+
+        proband_id = interpretation_info.get_results()[0]['proband']['name']
+
+        ## Perform the query
+        variants_reported = oc.clinical.info_interpretation(interpretations=interpretation_id, study=study)
+
+        ## Define empty list to store the variants, genes and the tiering
+        variant_list = []
+        for variant in variants_reported.get_results()[0]['primaryFindings']:
+            variant_type = variant['type']
+            print(variant_type)
+        
+            if variant_type == "INDEL":
+                variant_id = variant['studies'][0]['files'][0]['call']['variantId']
+            elif variant_type == "SNV":
+                variant_id = variant['id']
+            else:
+                print("Could not determine variant type")
+          
+            heterozygosity = variant['studies'][0]['samples'][0]['data'][0]
+
+            data_dict = {'variant_id':variant_id,
+                        'type': variant_type,
+                        'heterozygosity': heterozygosity}
+            variant_list.append(data_dict)
+
+        variant_dict[proband_id] = variant_list
+        #cases_and_variants_list.append(variant_dict)
+    #print(variant_dict)
     with open('data.json', 'w', encoding='utf-8') as f:
-        json.dump(variant_list, f, ensure_ascii=False, indent=4)
+        json.dump(variant_dict, f, ensure_ascii=False, indent=4)
+
+## Define an empty list to keep the case ids:
+case_ids = []
+
+## Iterate over the cases and retrieve the ids:
+for case in oc.clinical.search(study=study, include='id').result_iterator():
+    case_ids.append(case['id'])
+
+print('There are {} cases in study {}'.format(len(case_ids), study))
+
+selected_case="SAP-56130-1"
 
 extract_case_information()
-extract_interpreted_variants(selected_case)
+extract_interpreted_variants(case_ids)
 
 # family_response = oc.families.search(study='emee-glh@decipher_project:rare_disease_38', families='SAP-56130-1', limit=5)
 # print(family_response.get_results())

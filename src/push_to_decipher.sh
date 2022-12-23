@@ -5,7 +5,6 @@ pip install pyopencga
 dx-download-all-inputs
 
 dx download "$api_keys" -o api_keys.json
-dx download "$family_information_json" -o fam.json
 dx download "$opencga_config" -o opencga_login
 
 python3 /home/dnanexus/pull_from_opencga.py --configuration opencga_login
