@@ -69,23 +69,28 @@ variant_operations = oc.variant_operations
 
 study='emee-glh@decipher_project:rare_disease_38'
 
+#Make study an input
+#Make it handle families and how theyre related
 def extract_case_information():
+    '''
+    Give a study, get json of indiviuduals in the study with phenotypes
+    '''
     case_list = []
     for individual in oc.individuals.search(study=study).result_iterator():
         phenotype_list = []
         if individual['disorders']:
             print(individual['disorders'])
             if individual['sex']['id'] == "MALE":
-                proband_sex = "46_xy"
+                sex = "46_xy"
             if individual['sex']['id'] == "FEMALE":
-                proband_sex = "46_xx"
+                sex = "46_xx"
 
             if individual['phenotypes']:
                 for phenotype in individual['phenotypes']:
                     phenotype_list.append(phenotype['id'])
         
             case_dict = {
-                'sex': proband_sex,
+                'sex': sex,
                 'clinical_reference': individual['name'],
                 'phenotype_list': phenotype_list
             }
@@ -108,13 +113,12 @@ def extract_interpreted_variants(case_list):
         interpretation_info = oc.clinical.info(clinical_analysis=case, study=study)
         interpretation_info.print_results(fields='id,interpretation.id,type,proband.id')
 
-        ## Select interpretation object 
-        interpretation_object = interpretation_info.get_results()[0]['interpretation']
-
-        ## Select interpretation id 
+        ## Select Primary interpretation id 
         interpretation_id = interpretation_info.get_results()[0]['interpretation']['id']
 
+        # Find Proband ID
         proband_id = interpretation_info.get_results()[0]['proband']['name']
+        # Currently variants are only searched for proband
 
         ## Perform the query
         variants_reported = oc.clinical.info_interpretation(interpretations=interpretation_id, study=study)
@@ -124,8 +128,11 @@ def extract_interpreted_variants(case_list):
         for variant in variants_reported.get_results()[0]['primaryFindings']:
             variant_type = variant['type']
             print(variant_type)
-        
+
+            # Needs to hanle INSERTION and DELETION
             if variant_type == "INDEL":
+                # For INDELS, ref is stored as a dash in ['id'] need to get the
+                # nomenclature from ['call']
                 variant_id = variant['studies'][0]['files'][0]['call']['variantId']
             elif variant_type == "SNV":
                 variant_id = variant['id']
