@@ -1,25 +1,24 @@
 #!/usr/bin/env python3
-import requests                         # This is needed to talk to the API
 import json                             # Need this to format response
 import argparse                         # To parse command line arguments
-#from config import CLIENT_KEY, USER_KEY # API keys for TCA project in DECIPHER
+import requests                         # This is needed to talk to the API
 
 # Base url
-api_url = "https://www.deciphergenomics.org/api/"
+API_URL = "https://www.deciphergenomics.org/api/"
 
 # Define variables to append to base url to make specific to API endpoints
-patient_url = "patients"
-people_url = "people"
-variant_url = "variants"
-phenotype_url = "phenotypes"
+PATIENT_URL = "patients"
+PEOPLE_URL = "people"
+VARIANT_URL = "variants"
+PHENOTYPE_URL = "phenotypes"
 
 # Use parser to read command line arguments into the script
 parser = argparse.ArgumentParser(description="",
                                  formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
-parser.add_argument("-v", "--variant", help="variant data in JSON file")
-parser.add_argument("-k", "--configuration", help="variant data in JSON file")
-parser.add_argument("-c", "--case", help="case data in JSON file")
+parser.add_argument("-k", "--configuration", help="API keys for DECIPHER")
+parser.add_argument("-c", "--data_for_decipher", help="case data in JSON file")
+parser.add_argument("-s", "--submitter", help="DECIPHER submitter ID")
 
 args = parser.parse_args()
 
@@ -38,74 +37,43 @@ headers = {
     "X-Auth-Token-Account": USER_KEY
 }
 
-def create_family_in_decipher():
-    '''
-    Use a JSON with a patient and their family and create corresponding records
-    in DECIPHER 
-    '''
+def submit_data_to_decipher(case, submitter_id):
+    """
+    Take the json made by the pull_from_opencga.py script and submit the
+    information from this json to DECIPHER
+        inputs:
+            case (json) = the json from the pull_from_opencga.py script
+            submitted_id (int) = the ID of the user submitting this data to DECIPHER
+        outputs:
+            None
+    """
+    patient_person_id = None
 
-    family_information_json = args.family
-    with open(family_information_json, 'r') as f:
-        fam_json = json.load(f)
-
-
-    #print(fam_json["interpretation_request_data"]["json_request"]["pedigree"]["members"])
-
-    for member in fam_json["interpretation_request_data"]["json_request"]["pedigree"]["members"]:
-        print(member['participantId'])
-        # Create patient from proband
-        if member.get('isProband') is True:
-            print(member['participantId'])
-            proband_id = member['participantId']
-            if member.get('personKaryotypicSex') == 'XY':
-                proband_sex = "46_xy"
-            elif member.get('personKaryotypicSex') == 'XX':
-                proband_sex = "46_xx"
-            elif member.get('sex') == 'FEMALE':
-                proband_sex = "unknown"
-                proband_phenotypic_sex = "female"
-            elif member.get('sex') == 'MALE':
-                proband_sex = "unknown"
-                proband_phenotypic_sex = "male"
-            else:
-                print("Issue determining proband sex from input JSON")
-            print(proband_sex)
-
-    # Find affected status of mother 
-    for member in fam_json["interpretation_request_data"]["json_request"]["pedigree"]["members"]:
-        if member.get('additionalInformation')['relation_to_proband'] == "Mother":
-            if member.get('affectionStatus') == "AFFECTED":
-                mother_affected_status = "affected"
-            elif member.get('affectionStatus') == "UNAFFECTED":
-                mother_affected_status = "affected"
-            elif member.get('affectionStatus') == "UNCERTAIN":
-                mother_affected_status = "unknown"
-            else:
-                print("Could not detemine affected status of mother")
-
-        if member.get('additionalInformation')['relation_to_proband']== "Father":
-            if member.get('affectionStatus') == "AFFECTED":
-                father_affected_status = "affected"
-            elif member.get('affectionStatus') == "UNAFFECTED":
-                father_affected_status = "affected"
-            elif member.get('affectionStatus') == "UNCERTAIN":
-                father_affected_status = "unknown"
-            else:
-                print("Could not detemine affected status of father")
-
-    # Make a patient json
-    attribute_dict = {'contact_account_id': 4812, 'chromosomal_sex': proband_sex, 'has_aneuploidy': False, 'clinical_reference': proband_id, 'has_consent': False}
+    # Extract patient info from case in case json and format into patient
+    # dictionary compatible with DECIPHER API
+    proband_id = case['clinical_reference']
+    attribute_dict = {
+        'contact_account_id': submitter_id,
+        'chromosomal_sex': case['sex'],
+        'has_aneuploidy': False,
+        'clinical_reference': proband_id,
+        'has_consent': False
+        }
+    
     patient_dict = {"data":
         {
         "type": "Patient",
         "attributes": attribute_dict
         }
     }
-    patient_json=json.dumps(patient_dict)
 
-    response = requests.request("POST", api_url + patient_url, data=patient_json, headers=headers)
+    patient_json=json.dumps(patient_dict)  # Convert dictionary to JSON
+
+    # Submit patient to DECIPHER via the API
+    response = requests.request("POST", API_URL + PATIENT_URL, data=patient_json, headers=headers)
     response_json = json.loads(response.text)
-    print(response_json)
+
+    # Determine if the patient already exists in DECIPHER
     if 'errors' in response_json.keys():
         if response_json['errors'][0]['detail'] == 'Clinical reference must be unique within the project':
             print(
@@ -113,209 +81,123 @@ def create_family_in_decipher():
                 f'A patient with the local clinical reference number {proband_id}'
                 ' already exists in decipher'
                 )
-            updated_response = requests.request("GET", api_url + patient_url, headers=headers)
+            # If the patient exists, do an API "GET" request to get all the existing patients in DECIPHER
+            updated_response = requests.request("GET", API_URL + PATIENT_URL, headers=headers)
             updated_response_json = json.loads(updated_response.text)
-            print(updated_response_json)
+
+            # For each patient, check if the clinical reference number matches the current case
             for patient in updated_response_json['data']:
                 if patient['attributes']['clinical_reference'] == proband_id:
-                    person_response = requests.request("GET", api_url + patient_url + '/' + patient['id'] + '/people', headers=headers)
+
+                    # If the the clinical reference numbers match, request
+                    # the API to get the patient's "person ID"
+                    person_response = requests.request(
+                        "GET", API_URL + PATIENT_URL + '/' + patient['id'] + '/people', headers=headers
+                        )
                     print(person_response.text)
                     person_response_json = json.loads(person_response.text)
-                    create_family_in_decipher.patient_person_id = person_response_json["data"][0]["id"]
-        return
-    create_family_in_decipher.patient_person_id = response_json['data'][0]['relationships']['People']['data'][0]['id']
-    # Add parents
-    # Mother is created first, so indexed at [1]
-    mother_id = response_json['data'][0]['relationships']['People']['data'][1]['id']
-    # Father is created second, so indexed at [2]
-    father_id = response_json['data'][0]['relationships']['People']['data'][2]['id']
+                    patient_person_id = person_response_json["data"][0]["id"]
 
-    # Make a parent jsons
-    mother_dict = {"data":
-        {
-        "type": "Person",
-        "id": mother_id,
-        "attributes": {
-            "relation_status": mother_affected_status
-        }
-        }
-    }
-    father_dict = {"data":
-        {
-        "type": "Person",
-        "id": father_id,
-        "attributes": {
-            "relation_status": father_affected_status
-        }
-        }
-    }
-    # Convert to JSON
-    mother_json = json.dumps(mother_dict)
-    father_json = json.dumps(father_dict)
 
-    response = requests.request("PATCH", api_url + people_url + '/' + str(mother_id), data=mother_json, headers=headers)
-    print('Querying.... ' + api_url + people_url + mother_id)
-    print(response.text)
-    response = requests.request("PATCH", api_url + people_url + '/' + str(father_id), data=father_json, headers=headers)
-    print(response.text)
+    # If the person ID has not been obtained by the previous for loop, aka
+    # the patient is not already in DECIPHER, set the patient ID
+    if patient_person_id is None:
+        patient_person_id = response_json['data'][0]['relationships']['People']['data'][0]['id']
 
-def create_individual_in_decipher():
-    """_summary_
-    """
-    # Open case json with all individuals in OpenCGA with an indicated "disorder"
-    cases_json = args.case
-    with open(cases_json, 'r') as f:
-        cases = json.load(f)
-
-    for case in cases:
-        create_individual_in_decipher.patient_person_id = None
-
-        # Extract patient info from case in case json and format into patient
-        # dictionary compatible with DECIPHER API
-        proband_id = case['clinical_reference']
-        attribute_dict = {
-            'contact_account_id': 4812,
-            'chromosomal_sex': case['sex'],
-            'has_aneuploidy': False,
-            'clinical_reference': case['clinical_reference'],
-            'has_consent': False
-            }
-        
-        patient_dict = {"data":
-            {
-            "type": "Patient",
-            "attributes": attribute_dict
-            }
-        }
-
-        patient_json=json.dumps(patient_dict)  # Convert dictionary to JSON
-
-        # Submit patient to DECIPHER via the API
-        response = requests.request("POST", api_url + patient_url, data=patient_json, headers=headers)
-        response_json = json.loads(response.text)
-
-        # Determine if the patient already exists in DECIPHER
-        if 'errors' in response_json.keys():
-            if response_json['errors'][0]['detail'] == 'Clinical reference must be unique within the project':
-                print(
-                    'Clinical reference must be unique within the project.'
-                    f'A patient with the local clinical reference number {proband_id}'
-                    ' already exists in decipher'
-                    )
-                # If the patient exists, do an API "GET" request to get all the existing patients in DECIPHER
-                updated_response = requests.request("GET", api_url + patient_url, headers=headers)
-                updated_response_json = json.loads(updated_response.text)
-
-                # For each patient, check if the clinical reference number matches the current case
-                for patient in updated_response_json['data']:
-                    if patient['attributes']['clinical_reference'] == proband_id:
-
-                        # If the the clinical reference numbers match, request
-                        # the API to get the patient's "person ID"
-                        person_response = requests.request(
-                            "GET", api_url + patient_url + '/' + patient['id'] + '/people', headers=headers
-                            )
-                        print(person_response.text)
-                        person_response_json = json.loads(person_response.text)
-                        create_individual_in_decipher.patient_person_id = person_response_json["data"][0]["id"]
-                        cases_and_decipher_ids[proband_id] = create_individual_in_decipher.patient_person_id
-
-        # If the person ID has not been obtained by the previous for loop, aka
-        # the patient is not already in DECIPHER, set the patient ID
-        if create_individual_in_decipher.patient_person_id is None:
-            create_individual_in_decipher.patient_person_id = response_json['data'][0]['relationships']['People']['data'][0]['id']
-            cases_and_decipher_ids[proband_id] = create_individual_in_decipher.patient_person_id
-        phenotypes_to_submit = []
-
-        ## If the case has phenotypes, submit the phenotypes to DECIPHER
-        if case['phenotype_list']:
-            print("found  " + case['phenotype_list'][0])
-            for phenotype in case['phenotype_list']:
-                phenotypes_to_submit.append({
-                    "type": "Phenotype",
-                    "attributes": {
-                        "person_id": create_individual_in_decipher.patient_person_id,
-                        "hpo_term_id": phenotype.strip("HP:"),
-                        "is_present": True},
-                })
-            phen_data = {"data": phenotypes_to_submit}
-            print(phen_data)
-            phenotype_json = json.dumps(phen_data)
-            phen_response = requests.request("POST", api_url + phenotype_url, data=phenotype_json, headers=headers)
-            print("Querying "  + api_url + phenotype_url)
-            print(phen_response.text)
+    ## If the case has phenotypes, submit the phenotypes to DECIPHER
+    # Define empty list to submit as data input to DECIPHER API
+    phenotypes_to_submit = []
     
+    # Populate this list from the case json
+    if case['phenotype_list']:
+        print("found  " + case['phenotype_list'][0])
+        for phenotype in case['phenotype_list']:
+            phenotypes_to_submit.append({
+                "type": "Phenotype",
+                "attributes": {
+                    "person_id": patient_person_id,
+                    "hpo_term_id": phenotype.strip("HP:"),
+                    "is_present": True},
+            })
+        phen_data = {"data": phenotypes_to_submit}
+        print(phen_data)
 
-
-def submit_variants_from_opencga(clinical_reference, person_id):
-    '''
-    Reformat the variants from OpenCGA to be submitted to DECIPHER
-    '''
-    var_json = args.variant
-    with open(var_json, 'r') as f:
-        variant_json = json.load(f)
-
-    print(variant_json)
-    print("break")
+        # Submit phenotypes to DECIPHER
+        phenotype_json = json.dumps(phen_data)
+        phen_response = requests.request("POST", API_URL + PHENOTYPE_URL, data=phenotype_json, headers=headers)
+        print("Querying "  + API_URL + PHENOTYPE_URL)
+        print(phen_response.text)
+        phen_response_json = json.loads(phen_response.text)
+        print(phen_response_json)
+        if 'errors' in phen_response_json.keys():
+            if phen_response_json['errors'][0]['detail'] == 'Invalid HPO term':
+                # If one of the HPO terms is not valid, remove it from the
+                # phenotype dictionary and submit the other terms
+                # Missing phenotypes can be added manually in the GUI
+                invalid_hpo = phen_response_json['errors'][0]['source']["pointer"].rpartition('/')[-1]
+                print(invalid_hpo)
+                print(phen_data["data"][int(invalid_hpo)])
+                del phen_data["data"][int(invalid_hpo)]
+                print(phen_data)
+                phenotype_json = json.dumps(phen_data)
+                phen_response = requests.request("POST", API_URL + PHENOTYPE_URL, data=phenotype_json, headers=headers)
+                print(phen_response.text)
+    
+    ## Submit variants
     variant_dict_list = []
-    if clinical_reference in variant_json.keys():
-        for variant in variant_json[clinical_reference]:
+    for variant in case['variant_list']:
 
-            print(variant)
-            print(variant["type"])
-            heterozygosity = None
-            variant_type = None
-            if variant["heterozygosity"] == "0/1":
-                heterozygosity = "heterozygous"
-            elif variant["heterozygosity"] == "1/1":
-                heterozygosity = "homozygous"
-            else:
-                print("Could not determine heterozygosity")
+        # Set the values to None so they can be filled later
+        heterozygosity = None
+        variant_type = None
 
-            if variant["type"] in ["INDEL", "SNV"]:
-                variant_type = "sequence_variant"
-            else:
-                print ("could not determine variant type")
-            
-            if variant_type and heterozygosity is not None:
-                variant_dict_list.append(
-                    {"data":
-                        {
-                        "type": "Variant",
-                        "attributes": {
-                            "person_id": person_id,
-                            "variant_class": variant_type,
-                            "assembly": "GRCh38",
-                            "chr": variant["variant_id"].split(":")[0],
-                            "start": variant["variant_id"].split(":")[1],
-                            "ref_sequence": variant["variant_id"].split(":")[2],
-                            "alt_sequence": variant["variant_id"].split(":")[3],
-                            "inheritance": "unknown",
-                            "genotype": heterozygosity,
-                            "can_be_public": False,
-                            }
+        # Configure heterozygosity 
+        if variant["heterozygosity"] in ("0/1", "0|1"):
+            heterozygosity = "heterozygous"
+        elif variant["heterozygosity"] in ("1/1", "1|1"):
+            heterozygosity = "homozygous"
+        else:
+            print("Could not determine heterozygosity for " + variant)
+
+        # Configure variant type
+        if variant["type"] in ["INDEL", "SNV", "INSERTION", "DELETION"]:
+            variant_type = "sequence_variant"
+        else:
+            print ("could not determine variant type for " + variant)
+        
+        # If both of these variables have been assigned then add the variant to
+        # the list of variants to be submitted, in the correct format for 
+        # submission to DECIPHER
+        if variant_type and heterozygosity is not None:
+            variant_dict_list.append(
+                {"data":
+                    {
+                    "type": "Variant",
+                    "attributes": {
+                        "person_id": patient_person_id,
+                        "variant_class": variant_type,
+                        "assembly": "GRCh38",
+                        "chr": variant["variant_id"].split(":")[0],
+                        "start": variant["variant_id"].split(":")[1],
+                        "ref_sequence": variant["variant_id"].split(":")[2],
+                        "alt_sequence": variant["variant_id"].split(":")[3],
+                        "inheritance": "unknown",
+                        "genotype": heterozygosity,
+                        "can_be_public": False,
                         }
                     }
-            )
+                }
+        )
 
-    print (variant_dict_list)
+    # Submit the variants for this case to DECIPHER
     for variant_dict in variant_dict_list:
         print(variant_dict)
         variant_json_to_submit = json.dumps(variant_dict)
-        response = requests.request("POST", api_url + variant_url, data=variant_json_to_submit, headers=headers)
+        response = requests.request("POST", API_URL + VARIANT_URL, data=variant_json_to_submit, headers=headers)
         print(response.text)
 
-cases_and_decipher_ids = {}
-
-if args.case:
-    create_individual_in_decipher()
-
-if args.case and args.variant:
-    print(cases_and_decipher_ids)
-    for key in cases_and_decipher_ids.keys():
-        submit_variants_from_opencga(key, cases_and_decipher_ids[key])
-
-# if args.family and args.variant:
-#     create_family_in_decipher()
-#     patient_person_id = create_family_in_decipher.patient_person_id
-#     submit_variants_from_opencga(patient_person_id)
+if args.data_for_decipher and args.submitter:
+    data_to_submit = args.data_for_decipher
+    with open(data_to_submit, 'r') as f:
+        data_to_submit_json = json.load(f)
+    submit_data_to_decipher(data_to_submit_json, args.submitter)

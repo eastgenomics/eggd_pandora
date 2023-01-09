@@ -1,14 +1,15 @@
 # Import ClientConfiguration and OpencgaClient class
-from pyopencga.opencga_config import ClientConfiguration
-from pyopencga.opencga_client import OpencgaClient
 import json
 import argparse
-import pandas as pd
+from pyopencga.opencga_config import ClientConfiguration
+from pyopencga.opencga_client import OpencgaClient
 
 parser = argparse.ArgumentParser(description="Just an example",
                                  formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
 parser.add_argument("-k", "--configuration", help="OpenCGA login")
+parser.add_argument("-c", "--case", help="OpenCGA case ID that is to be uploaded to DECIPHER")
+parser.add_argument("-s", "--study", help="OpenCGA study where this case is located")
 
 args = parser.parse_args()
 print(args)
@@ -18,7 +19,7 @@ login_details = args.configuration
 with open(login_details, 'r') as f:
     datastore = json.load(f)
 
-# Retrieve keys from JSON 
+# Retrieve keys from JSON
 USER = datastore["USER"]
 PASSWORD = datastore["PASSWORD"]
 
@@ -29,160 +30,77 @@ config = ClientConfiguration(
 oc = OpencgaClient(config)
 oc.login(user=USER, password=PASSWORD)
 
-## Create main clients
-users = oc.users
-projects = oc.projects
-studies = oc.studies
-files = oc.files
-jobs = oc.jobs
-families = oc.families
-individuals = oc.individuals
-samples = oc.samples
-cohorts = oc.cohorts
-#panels = oc.panels
- 
-## Create analysis clients
-#alignments = oc.alignment
-variants = oc.variants
-clinical = oc.clinical
-ga4gh = oc.ga4gh
- 
-## Create administrative clients
-admin = oc.admin
-meta = oc.meta
-variant_operations = oc.variant_operations
-
-# sample_result = oc.samples.search(study='emee-glh@decipher_project:rare_disease_38', limit=5, include='id')
-# sample_id_list = []
-# for sample in sample_result.get_results():
-#     print(sample)
-#     sample_id_list.append(sample['id'])
-
-# for sample_id in sample_id_list:
-#     variant_response =  oc.variants.query(study='emee-glh@decipher_project:rare_disease_38', sample=sample_id, limit='3')
-#     for variant in variant_response.get_results():
-#         print('SAMPLE: ' + sample_id + ' CHROM: ' + variant['chromosome'] + ' POS: ' +  str(variant['start']) + ' REF: ' + variant['reference'] + ' ALT: ' + variant['alternate'])
-#     indication_resp = oc.clinical.search_interpretation(study='emee-glh@decipher_project:rare_disease_38', limit='3')
-#     for indication in indication_resp.get_results():
-#         print(indication)
-
-
-study='emee-glh@decipher_project:rare_disease_38'
-
-#Make study an input
-#Make it handle families and how theyre related
-def extract_case_information():
+def extract_case_information(case, study):
     '''
-    Give a study, get json of indiviuduals in the study with phenotypes
+    Give a case from a study in OpenCGA, return a json for the case proband with
+    all the information needed to submit that case to DECIPHER
+        inputs:
+            case (str) = the case ID in OpenCGA
+            study (str) = the study where this case is located in OpenCGA
+        outputs:
+            a json of all the information needed to submit a case to DECIPHER:
+            proband id
+            proband sex
+            variants
+            phentypes
     '''
-    case_list = []
-    for individual in oc.individuals.search(study=study).result_iterator():
-        phenotype_list = []
-        if individual['disorders']:
-            print(individual['disorders'])
-            if individual['sex']['id'] == "MALE":
-                sex = "46_xy"
-            if individual['sex']['id'] == "FEMALE":
-                sex = "46_xx"
+    # Find this case from the Analysis - Clinical client of the OpenCGA API
+    clinical_analysis = oc.clinical.search(study=study, id=case)
 
-            if individual['phenotypes']:
-                for phenotype in individual['phenotypes']:
-                    phenotype_list.append(phenotype['id'])
-        
-            case_dict = {
-                'sex': sex,
-                'clinical_reference': individual['name'],
-                'phenotype_list': phenotype_list
-            }
+    # Retrieve the proband sex
+    proband = clinical_analysis.get_result(result_pos=0)['proband']
+    if proband['sex']['id'] == "MALE":
+        sex = "46_xy"
+    if proband['sex']['id'] == "FEMALE":
+        sex = "46_xx"
 
-            case_list.append(case_dict)
+    # Retrieve the phenotypes
+    phenotype_list = []
+    if proband['phenotypes']:
+        for phenotype in proband['phenotypes']:
+            phenotype_list.append(phenotype['id'])
 
-    with open('cases.json', 'w', encoding='utf-8') as f:
-        json.dump(case_list, f, ensure_ascii=False, indent=4)
+    # Retrieve the variants. Only those that have the "REVIEWED" status.
+    # Currently variants are only searched for proband
 
+    # Get the ID for the Primary Interpretation
+    interpretation = clinical_analysis.get_result(result_pos=0)['interpretation']
 
-def extract_interpreted_variants(case_list):
-    '''
-    For a given case, extract the variants in open CGA under the most recent
-    interpretation.
-    '''
-    variant_dict = {}
-    
-    for case in case_list:
-        ## Query using the clinical info web service
-        interpretation_info = oc.clinical.info(clinical_analysis=case, study=study)
-        interpretation_info.print_results(fields='id,interpretation.id,type,proband.id')
+    # Extract the variant information from the Primary Interpretation
+    variant_list = []
+    for variant in interpretation['primaryFindings']:
+        variant_type = variant['type']
 
-        ## Select Primary interpretation id 
-        interpretation_id = interpretation_info.get_results()[0]['interpretation']['id']
+        if variant_type in ("INDEL", "DELETION", "INSERTION"):
+            # For INDELS, ref is stored as a dash in ['id'] need to get the
+            # nomenclature from ['call']
+            variant_id = variant['studies'][0]['files'][0]['call']['variantId']
+        elif variant_type == "SNV":
+            # For SNVS, ref is stored under the ['id'] key
+            variant_id = variant['id']
+        else:
+            print("Could not determine variant type")
 
-        # Find Proband ID
-        proband_id = interpretation_info.get_results()[0]['proband']['name']
-        # Currently variants are only searched for proband
+        heterozygosity = variant['studies'][0]['samples'][0]['data'][0]
 
-        ## Perform the query
-        variants_reported = oc.clinical.info_interpretation(interpretations=interpretation_id, study=study)
+        # Structure the variant information into a dictionary and add to a list
+        # of variants that have been reviewed for this case
+        data_dict = {'variant_id':variant_id,
+                    'type': variant_type,
+                    'heterozygosity': heterozygosity}
+        variant_list.append(data_dict)
 
-        ## Define empty list to store the variants, genes and the tiering
-        variant_list = []
-        for variant in variants_reported.get_results()[0]['primaryFindings']:
-            variant_type = variant['type']
-            print(variant_type)
+    # Format the information needed to submit a case to DECIPHER into a dictionary
+    case_dict = {
+        'sex': sex,
+        'clinical_reference': proband['id'],
+        'phenotype_list': phenotype_list,
+        'variant_list': variant_list
+    }
 
-            # Needs to hanle INSERTION and DELETION
-            if variant_type == "INDEL":
-                # For INDELS, ref is stored as a dash in ['id'] need to get the
-                # nomenclature from ['call']
-                variant_id = variant['studies'][0]['files'][0]['call']['variantId']
-            elif variant_type == "SNV":
-                variant_id = variant['id']
-            else:
-                print("Could not determine variant type")
-          
-            heterozygosity = variant['studies'][0]['samples'][0]['data'][0]
+    return case_dict
 
-            data_dict = {'variant_id':variant_id,
-                        'type': variant_type,
-                        'heterozygosity': heterozygosity}
-            variant_list.append(data_dict)
-
-        variant_dict[proband_id] = variant_list
-        #cases_and_variants_list.append(variant_dict)
-    #print(variant_dict)
-    with open('data.json', 'w', encoding='utf-8') as f:
-        json.dump(variant_dict, f, ensure_ascii=False, indent=4)
-
-## Define an empty list to keep the case ids:
-case_ids = []
-
-## Iterate over the cases and retrieve the ids:
-for case in oc.clinical.search(study=study, include='id').result_iterator():
-    case_ids.append(case['id'])
-
-print('There are {} cases in study {}'.format(len(case_ids), study))
-
-selected_case="SAP-56130-1"
-
-extract_case_information()
-extract_interpreted_variants(case_ids)
-
-# family_response = oc.families.search(study='emee-glh@decipher_project:rare_disease_38', families='SAP-56130-1', limit=5)
-# print(family_response.get_results())
-
-#result = oc.individuals.search(study='emee-glh rd_grch38', limit=5, include='id')
-# result = oc.ga4gh.search_variants()
-# print(result.responses)
-
-# # Show as dataframe
-# df = pd.DataFrame.from_dict(result.responses[0]['results'])
-# print(df)
-
-# # Show as JSON
-# result_json = json.dumps(result.responses[0]['results'])
-# print(result_json)
-# for sample in result.responses[0]['results']:
-#     sample_json = json.dumps(sample, indent=4)
-#     print(sample_json)
-
-# ariant_response =  oc.variants.query(study='emee-glh@rd_grch38:panel', sample="X218112-GM2012176-TWE-N-EGG4_S3_L001:0/1,1/1,1/2", limit='3')
-
+if args.case and args.study:
+    info_to_send_to_decipher = extract_case_information(args.case, args.study)
+    with open('case_phenotype_and_variant_data.json', 'w', encoding='utf-8') as f:
+        json.dump(info_to_send_to_decipher, f, ensure_ascii=False, indent=4)

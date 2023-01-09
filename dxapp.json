@@ -25,6 +25,30 @@
         "default": {"$dnanexus_link": "file-GKQgxp0462ZvY6zx2QY76jbg"},
         "patterns": ["*.json"],
         "optional": false
+        },
+        {
+        "name": "opencga_case_id",
+        "label": "OpenCGA case ID",
+        "help": "OpenCGA case ID",
+        "class": "string",
+        "default": "SAP-43472-1",
+        "optional": false
+        },
+        {
+        "name": "opencga_study_name",
+        "label": "OpenCGA study where the case is located",
+        "help": "The OpenCGA study name in the format[[user@]project:] study where study and project can be either the ID or UUID",
+        "class": "string",
+        "default": "emee-glh@decipher_project:rare_disease_38",
+        "optional": false
+        },
+        {
+        "name": "decipher_submitter_id",
+        "label": "DECIPHER ID of submitter",
+        "help": "The account_id of the DECIPHER user who is the responsible for the patient record. Default is 4812, for Katherine Winfield",
+        "class": "int",
+        "default": 4812,
+        "optional": false
         }
     ],
     "outputSpec": [
