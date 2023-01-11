@@ -63,7 +63,7 @@ def extract_case_information(case, study):
     # Retrieve the variants. Only those that have the "REVIEWED" status.
     # Currently variants are only searched for proband
 
-    # Get the ID for the Primary Interpretation
+    # Get the interpretation info for the Primary Interpretation
     interpretation = clinical_analysis.get_result(result_pos=0)['interpretation']
 
     # Extract the variant information from the Primary Interpretation
