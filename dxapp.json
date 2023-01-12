@@ -1,6 +1,6 @@
 {
-    "name": "push_to_decipher",
-    "title": "push_to_decipher",
+    "name": "eggd_pandora",
+    "title": "eggd_pandora",
     "summary": "Takes patient and variant information and pushes into DECIPHER",
     "dxapi": "1.0.0",
     "version": "1.0.0",

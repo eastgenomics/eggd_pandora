@@ -168,6 +168,14 @@ def submit_data_to_decipher(case, submitter_id):
         # If both of these variables have been assigned then add the variant to
         # the list of variants to be submitted, in the correct format for 
         # submission to DECIPHER
+        # if comma in variant and "2" in heterozygosity
+        # if heterozygosity is not 0 go to that index in the variant nomenclature
+        # and submit that
+        # if both are the same then do not submit it twice
+        # homozygous 2/2
+        # if 0 do nothing
+        # if the same submit once 12:11111:A:G 12:11111:A:AG,AGG
+        # else go to that index in the variant nomenclature and submit that
         if variant_type and heterozygosity is not None:
             variant_dict_list.append(
                 {"data":

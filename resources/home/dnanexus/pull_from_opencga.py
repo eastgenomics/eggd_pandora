@@ -85,7 +85,7 @@ def extract_case_information(case, study):
 
         # Structure the variant information into a dictionary and add to a list
         # of variants that have been reviewed for this case
-        data_dict = {'variant_id':variant_id,
+        data_dict = {'variant_id': variant_id,
                     'type': variant_type,
                     'heterozygosity': heterozygosity}
         variant_list.append(data_dict)
