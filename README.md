@@ -11,11 +11,11 @@ When given a case in OpenCGA this app accesses the primary interpretation for th
 * `--decipher_submitter_id`: (int) the DECIPHER account ID of the submitter
 
 ## How does this app work?
-This app runs the script pandora.sh. which runs pull_from_opencga.py, which is a python script that extracts the necessary information for each case to be submitted to DECIPHER and outputs it in a JSON called `case_phenotype_and_variant_data.json`. In the following format:
+This app runs the script pandora.sh. which runs pull_from_opencga.py, which is a python script that extracts the necessary information for each case to be submitted to DECIPHER and outputs it in a JSON called case_phenotype_and_variant_data.json, which is in the following format:
 ```
     case_dict = {
         'sex': sex,
-        'clinical_reference': proband['id'],
+        'clinical_reference': opencga_proband_id,
         'phenotype_list': phenotype_list,
         'variant_list': variant_list
     }

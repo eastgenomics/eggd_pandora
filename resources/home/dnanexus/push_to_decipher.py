@@ -142,8 +142,7 @@ def submit_data_to_decipher(case, submitter_id):
                 phenotype_json = json.dumps(phen_data)
                 phen_response = requests.request("POST", API_URL + PHENOTYPE_URL, data=phenotype_json, headers=headers)
                 print(phen_response.text)
-    
-    ## Submit variants
+
     variant_dict_list = []
     for variant in case['variant_list']:
 
@@ -151,51 +150,59 @@ def submit_data_to_decipher(case, submitter_id):
         heterozygosity = None
         variant_type = None
 
-        # Configure heterozygosity 
-        if variant["heterozygosity"] in ("0/1", "0|1"):
-            heterozygosity = "heterozygous"
-        elif variant["heterozygosity"] in ("1/1", "1|1"):
-            heterozygosity = "homozygous"
-        else:
-            print("Could not determine heterozygosity for " + variant)
-
         # Configure variant type
         if variant["type"] in ["INDEL", "SNV", "INSERTION", "DELETION"]:
             variant_type = "sequence_variant"
         else:
             print ("could not determine variant type for " + variant)
-        
-        # If both of these variables have been assigned then add the variant to
-        # the list of variants to be submitted, in the correct format for 
-        # submission to DECIPHER
-        # if comma in variant and "2" in heterozygosity
-        # if heterozygosity is not 0 go to that index in the variant nomenclature
-        # and submit that
-        # if both are the same then do not submit it twice
-        # homozygous 2/2
-        # if 0 do nothing
-        # if the same submit once 12:11111:A:G 12:11111:A:AG,AGG
-        # else go to that index in the variant nomenclature and submit that
+
+        # Configure heterozygosity
+        # Split on '/' or '|' and store as a two-item list
+        variant_index = variant["heterozygosity"].replace("|", "/").split("/")
+        # If the first and second item in this list are not equal then it is
+        # heterozygous, if they are different it is homozygous
+        if variant_index[0] != variant_index[1]:
+            heterozygosity = "heterozygous"
+        elif variant_index[0] == variant_index[1]:
+            heterozygosity = "homozygous"
+
+        # Only submit variants if the type and heterozygosity have been 
+        # extracted. If both of these variables have been assigned then add the
+        # variant to the list of variants to be submitted, in the correct
+        # format for submission to DECIPHER
         if variant_type and heterozygosity is not None:
-            variant_dict_list.append(
-                {"data":
-                    {
-                    "type": "Variant",
-                    "attributes": {
-                        "person_id": patient_person_id,
-                        "variant_class": variant_type,
-                        "assembly": "GRCh38",
-                        "chr": variant["variant_id"].split(":")[0],
-                        "start": variant["variant_id"].split(":")[1],
-                        "ref_sequence": variant["variant_id"].split(":")[2],
-                        "alt_sequence": variant["variant_id"].split(":")[3],
-                        "inheritance": "unknown",
-                        "genotype": heterozygosity,
-                        "can_be_public": False,
-                        }
-                    }
-                }
-        )
+            # The variant index will have two of the same value if the variant
+            # is homozygous. The already done list stores the variant indices
+            # for variants that have been added to variant_dict_list to ensure
+            # that the same variant is not submitted twice
+            already_done = []
+            for i in variant_index:     
+                if i not in already_done:
+                    # All non-zero indices indicate that that variant is present
+                    # and should be submitted to DECIPHER
+                    if i != "0":
+                        # If the index is not zero go to that index in the
+                        # variant nomenclature and submit that variant
+                        variant_dict_list.append(
+                                {"data":
+                                    {
+                                    "type": "Variant",
+                                    "attributes": {
+                                        "person_id": patient_person_id,
+                                        "variant_class": variant_type,
+                                        "assembly": "GRCh38",
+                                        "chr": variant["variant_id"].split(":")[0],
+                                        "start": variant["variant_id"].split(":")[1],
+                                        "ref_sequence": variant["variant_id"].split(":")[2],
+                                        "alt_sequence": variant["variant_id"].split(":")[3].split(",")[int(i)-1],
+                                        "inheritance": "unknown",
+                                        "genotype": heterozygosity,
+                                        "can_be_public": False,
+                                        }
+                                    }
+                                }
+                        )
+                already_done.append(i)
 
     # Submit the variants for this case to DECIPHER
     for variant_dict in variant_dict_list:
