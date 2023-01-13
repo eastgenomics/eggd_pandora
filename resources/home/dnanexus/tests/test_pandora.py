@@ -22,8 +22,7 @@ class TestDecipher():
         "type": "SNV",
         "heterozygosity": "0/0"}
     ]
-    #def test_patient_maker():
-    #@staticmethod
+
     def test_heterozygosity(self):
         '''
         Test that the function submit_data_to_decipher() works out the
@@ -55,12 +54,17 @@ class TestDecipher():
         ]
 
     def test_zeros_and_duplicates_removed(self):
+        '''
+        Test that for each variant in the variant list the correct ref and alt
+        information is extracted and submitted
+        This test ensures no variants that are not present (0 in heterozygosity)
+        are submitted and that homozygous variants are not submitted twice
+        '''
         variant_list = []
         for variant in self.case['variant_list']:
             variant_index = variant["heterozygosity"].replace("|", "/").split("/")
-            
             already_done = []
-            for i in variant_index:     
+            for i in variant_index:
                 if i not in already_done:
                     # Having an already done list means that homozygous variants
                     # will not be submitted twice
@@ -89,4 +93,3 @@ class TestDecipher():
         ]
 if __name__ == "__main__":
     decipher = TestDecipher()
-        
