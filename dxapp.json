@@ -9,7 +9,7 @@
     },
     "inputSpec": [
         {
-        "name": "api_keys",
+        "name": "decipher_api_keys",
         "label": "DECIPHER API keys",
         "help": "Link to file containing client and user keys",
         "class": "file",
@@ -68,7 +68,7 @@
       "release": "20.04",
       "version": "0",
       "interpreter": "bash",
-      "file": "src/push_to_decipher.sh",
+      "file": "src/pandora.sh",
       "timeoutPolicy": {
         "*": {
           "hours": 1

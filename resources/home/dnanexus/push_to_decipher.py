@@ -174,7 +174,7 @@ def submit_data_to_decipher(case, submitter_id):
             # The variant index will have two of the same value if the variant
             # is homozygous. The already done list stores the variant indices
             # for variants that have been added to variant_dict_list to ensure
-            # that the same variant is not submitted twice
+            # that homozygous variants are not submitted twice
             already_done = []
             for i in variant_index:     
                 if i not in already_done:

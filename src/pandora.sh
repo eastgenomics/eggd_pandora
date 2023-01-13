@@ -1,6 +1,7 @@
 #!/bin/bash
 set -exo pipefail #if any part goes wrong, job will fail
 pip install pyopencga
+pip install pytest
 dx-download-all-inputs
 
 dx download "$decipher_api_keys" -o decipher_api_keys.json
