@@ -11,7 +11,7 @@ When given a case in OpenCGA this app accesses the primary interpretation for th
 * `--decipher_submitter_id`: (int) the DECIPHER account ID of the submitter
 
 ## How does this app work?
-This app runs the script pandora.sh. which runs pull_from_opencga.py, which is a python script that extracts the necessary information for each case to be submitted to DECIPHER and outputs it in a JSON called case_phenotype_and_variant_data.json, which is in the following format:
+This app runs the script pandora.sh which runs pull_from_opencga.py, which is a python script that extracts the necessary information for each case to be submitted to DECIPHER and outputs it in a JSON called case_phenotype_and_variant_data.json, which is in the following format:
 ```
     case_dict = {
         'sex': sex,
@@ -24,3 +24,5 @@ The pandora.sh script then inputs this JSON to the push_to_decipher.py script wh
 
 ## What does this app output?
 This app creates a DECIPHER patient record for a case in OpenCGA and adds HPO phenotype terms and intepreted variants. The eggd_pandora app will create a proband patient record in DECIPHER if needed, or add the variants to an existing patient.
+
+## This app was made by East GLH
