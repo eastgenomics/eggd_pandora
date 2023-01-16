@@ -60,6 +60,19 @@ def extract_case_information(case, study):
         for phenotype in proband['phenotypes']:
             phenotype_list.append(phenotype['id'])
 
+    # Retrieve "disorder" and "date evaluateed which would be required for API
+    # submission to ClinVar if this functionality via a push_to_clinvar.py
+    # script were added to eggd_pandora in the future
+    # These are commented out as this functionality does not exist. If this
+    # functionality were added in the future, these variables would be added to
+    # case_dict
+
+    # if proband['disorders']:
+    #     disorder = proband['disorders'][0]['id']
+
+    # if proband["modificationDate"]:
+    #     date_evaluated = proband["modificationDate"]
+
     # Retrieve the variants. Only those that have the "REVIEWED" status.
     # Currently variants are only searched for proband
 
