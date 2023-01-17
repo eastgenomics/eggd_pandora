@@ -6,7 +6,7 @@ class TestDecipher():
     '''
     Tests for checking function to push data to DECIPHER works
     '''
-    # Define empty case dictionary and add sample variant_list. This is the 
+    # Define empty case dictionary and add sample variant_list. This is the
     # format that the submit_data_to_decipher() function in push_to_decipher.py
     # receives variant information. These test cases are used to test that the
     # submit_data_to_decipher() function submits the correct information
@@ -51,7 +51,9 @@ class TestDecipher():
         heterozygosities = []
         for variant in self.case['variant_list']:
             heterozygosity = None
-            variant_index = variant["heterozygosity"].replace("|", "/").split("/")
+            variant_index = (
+                variant["heterozygosity"].replace("|", "/").split("/")
+            )
             if variant_index[0] != variant_index[1]:
                 heterozygosity = "heterozygous"
             elif variant_index[0] == variant_index[1]:
@@ -79,7 +81,9 @@ class TestDecipher():
         '''
         variant_list = []
         for variant in self.case['variant_list']:
-            variant_index = variant["heterozygosity"].replace("|", "/").split("/")
+            variant_index = (
+                variant["heterozygosity"].replace("|", "/").split("/")
+            )
             already_done = []
             for i in variant_index:
                 if i not in already_done:

@@ -121,7 +121,7 @@ def submit_data_to_decipher(case, submitter_id):
     # If the case has phenotypes, submit the phenotypes to DECIPHER
     # Define empty list to submit as data input to DECIPHER API
     phenotypes_to_submit = []
-    
+
     # Populate this list from the case json
     if case['phenotype_list']:
         for phenotype in case['phenotype_list']:
