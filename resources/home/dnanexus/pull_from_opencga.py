@@ -1,22 +1,31 @@
+#!/usr/bin/env python3
 # Import ClientConfiguration and OpencgaClient class
 import json
 import argparse
 from pyopencga.opencga_config import ClientConfiguration
 from pyopencga.opencga_client import OpencgaClient
 
-parser = argparse.ArgumentParser(description="Just an example",
-                                 formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+parser = argparse.ArgumentParser(
+                                description="",
+                                formatter_class=(
+                                   argparse.ArgumentDefaultsHelpFormatter
+                                   )
+                            )
 
 parser.add_argument("-k", "--configuration", help="OpenCGA login")
-parser.add_argument("-c", "--case", help="OpenCGA case ID that is to be uploaded to DECIPHER")
-parser.add_argument("-s", "--study", help="OpenCGA study where this case is located")
+parser.add_argument("-c", "--case",
+                    help="OpenCGA case ID that is to be uploaded to DECIPHER"
+                    )
+parser.add_argument("-s", "--study",
+                    help="OpenCGA study where this case is located"
+                    )
 
 args = parser.parse_args()
 print(args)
 
 # Extract and open JSON file containing OpenCGA login data
 login_details = args.configuration
-with open(login_details, 'r') as f:
+with open(login_details, 'r', encoding='utf-8') as f:
     datastore = json.load(f)
 
 # Retrieve keys from JSON
@@ -30,10 +39,11 @@ config = ClientConfiguration(
 oc = OpencgaClient(config)
 oc.login(user=USER, password=PASSWORD)
 
+
 def extract_case_information(case, study):
     '''
-    Give a case from a study in OpenCGA, return a json for the case proband with
-    all the information needed to submit that case to DECIPHER
+    Give a case from a study in OpenCGA, return a json for the case proband
+    with all the information needed to submit that case to DECIPHER
         inputs:
             case (str) = the case ID in OpenCGA
             study (str) = the study where this case is located in OpenCGA
@@ -77,7 +87,9 @@ def extract_case_information(case, study):
     # Currently variants are only searched for proband
 
     # Get the interpretation info for the Primary Interpretation
-    interpretation = clinical_analysis.get_result(result_pos=0)['interpretation']
+    interpretation = clinical_analysis.get_result(result_pos=0)(
+        ['interpretation']
+    )
 
     # Extract the variant information from the Primary Interpretation
     variant_list = []
@@ -98,12 +110,14 @@ def extract_case_information(case, study):
 
         # Structure the variant information into a dictionary and add to a list
         # of variants that have been reviewed for this case
-        data_dict = {'variant_id': variant_id,
-                    'type': variant_type,
-                    'heterozygosity': heterozygosity}
+        data_dict = {
+            'variant_id': variant_id,
+            'type': variant_type,
+            'heterozygosity': heterozygosity
+            }
         variant_list.append(data_dict)
 
-    # Format the information needed to submit a case to DECIPHER into a dictionary
+    # Format the data needed to submit a case to DECIPHER into a dictionary
     case_dict = {
         'sex': sex,
         'clinical_reference': proband['id'],
@@ -113,7 +127,10 @@ def extract_case_information(case, study):
 
     return case_dict
 
+
 if args.case and args.study:
     info_to_send_to_decipher = extract_case_information(args.case, args.study)
-    with open('case_phenotype_and_variant_data.json', 'w', encoding='utf-8') as f:
+    with open(
+        'case_phenotype_and_variant_data.json', 'w', encoding='utf-8'
+    ) as f:
         json.dump(info_to_send_to_decipher, f, ensure_ascii=False, indent=4)
