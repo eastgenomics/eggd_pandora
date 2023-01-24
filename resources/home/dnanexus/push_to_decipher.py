@@ -27,13 +27,13 @@ parser.add_argument("-s", "--submitter", help="DECIPHER submitter ID")
 args = parser.parse_args()
 
 # Extract and open JSON file containing API keys
-api_file = args.configuration
-with open(api_file, 'r', encoding='utf-8') as f:
-    datastore = json.load(f)
+decipher_api_keys_file = args.configuration
+with open(decipher_api_keys_file, 'r', encoding='utf-8') as f:
+    decipher_api_keys = json.load(f)
 
 # Retrieve keys from JSON and set as headers for API call
-CLIENT_KEY = datastore["CLIENT_KEY"]
-USER_KEY = datastore["USER_KEY"]
+CLIENT_KEY = decipher_api_keys["CLIENT_KEY"]
+USER_KEY = decipher_api_keys["USER_KEY"]
 
 headers = {
     "Content-Type": "application/vnd.api+json",
@@ -54,8 +54,9 @@ def submit_data_to_decipher(case, submitter_id):
     """
     patient_person_id = None
 
-    # Extract patient info from case in case json and format into patient
-    # dictionary compatible with DECIPHER API
+    # Extract patient info from case json and format into patient dictionary
+    # compatible with DECIPHER API
+
     proband_id = case['clinical_reference']
     attribute_dict = {
         'contact_account_id': submitter_id,
@@ -123,44 +124,43 @@ def submit_data_to_decipher(case, submitter_id):
     phenotypes_to_submit = []
 
     # Populate this list from the case json
-    if case['phenotype_list']:
-        for phenotype in case['phenotype_list']:
-            phenotypes_to_submit.append({
-                "type": "Phenotype",
-                "attributes": {
-                    "person_id": patient_person_id,
-                    "hpo_term_id": phenotype.strip("HP:"),
-                    "is_present": True},
-            })
-        phen_data = {"data": phenotypes_to_submit}
-        print(phen_data)
+    for phenotype in case.get('phenotype_list', []):
+        phenotypes_to_submit.append({
+            "type": "Phenotype",
+            "attributes": {
+                "person_id": patient_person_id,
+                "hpo_term_id": phenotype.strip("HP:"),
+                "is_present": True},
+        })
+    phen_data = {"data": phenotypes_to_submit}
+    print(phen_data)
 
-        # Submit phenotypes to DECIPHER
-        phenotype_json = json.dumps(phen_data)
-        phen_response = requests.request(
-            "POST", API_URL + PHENOTYPE_URL,
-            data=phenotype_json, headers=headers
-            )
-        print("Querying " + API_URL + PHENOTYPE_URL)
-        phen_response_json = json.loads(phen_response.text)
-        print(phen_response_json)
+    # Submit phenotypes to DECIPHER
+    phenotype_json = json.dumps(phen_data)
+    phen_response = requests.request(
+        "POST", API_URL + PHENOTYPE_URL,
+        data=phenotype_json, headers=headers
+        )
+    print("Querying " + API_URL + PHENOTYPE_URL)
+    phen_response_json = json.loads(phen_response.text)
+    print(phen_response_json)
 
-        if 'errors' in phen_response_json.keys():
-            if phen_response_json['errors'][0]['detail'] == 'Invalid HPO term':
-                # If one of the HPO terms is not valid, remove it from the
-                # phenotype dictionary and submit the other terms
-                # Missing phenotypes can be added manually in the GUI
-                invalid_hpo = phen_response_json['errors'][0]['source']["pointer"].rpartition('/')[-1]
-                print(invalid_hpo)
-                print(phen_data["data"][int(invalid_hpo)])
-                del phen_data["data"][int(invalid_hpo)]
-                print(phen_data)
-                phenotype_json = json.dumps(phen_data)
-                phen_response = requests.request(
-                    "POST", API_URL + PHENOTYPE_URL,
-                    data=phenotype_json, headers=headers
-                    )
-                print(phen_response.text)
+    if 'errors' in phen_response_json.keys():
+        if phen_response_json['errors'][0]['detail'] == 'Invalid HPO term':
+            # If one of the HPO terms is not valid, remove it from the
+            # phenotype dictionary and submit the other terms
+            # Missing phenotypes can be added manually in the GUI
+            invalid_hpo = phen_response_json['errors'][0]['source']["pointer"].rpartition('/')[-1]
+            print(invalid_hpo)
+            print(phen_data["data"][int(invalid_hpo)])
+            del phen_data["data"][int(invalid_hpo)]
+            print(phen_data)
+            phenotype_json = json.dumps(phen_data)
+            phen_response = requests.request(
+                "POST", API_URL + PHENOTYPE_URL,
+                data=phenotype_json, headers=headers
+                )
+            print(phen_response.text)
 
     variant_dict_list = []
     for variant in case['variant_list']:
@@ -191,35 +191,31 @@ def submit_data_to_decipher(case, submitter_id):
         # format for submission to DECIPHER
         if variant_type and heterozygosity is not None:
             # The variant index will have two of the same value if the variant
-            # is homozygous. The already done list stores the variant indices
-            # for variants that have been added to variant_dict_list to ensure
-            # that homozygous variants are not submitted twice
-            already_done = []
-            for i in variant_index:
-                if i not in already_done:
-                    # All non-zero indices indicate that that variant exists
-                    # and should be submitted to DECIPHER
-                    if i != "0":
-                        # If the index is not zero go to that index in the
-                        # variant nomenclature and submit that variant
-                        variant_dict_list.append(
-                            {"data": {
-                                "type": "Variant",
-                                "attributes": {
-                                    "person_id": patient_person_id,
-                                    "variant_class": variant_type,
-                                    "assembly": "GRCh38",
-                                    "chr": variant["variant_id"].split(":")[0],
-                                    "start": variant["variant_id"].split(":")[1],
-                                    "ref_sequence": variant["variant_id"].split(":")[2],
-                                    "alt_sequence": variant["variant_id"].split(":")[3].split(",")[int(i)-1],
-                                    "inheritance": "unknown",
-                                    "genotype": heterozygosity,
-                                    "can_be_public": False,
-                                }
-                            }}
-                        )
-                already_done.append(i)
+            # is homozygous. Using set(variant_index) removes duplicate variant
+            # indices ensuring that homozygous variants are not submitted twice
+            for i in set(variant_index):
+                # All non-zero indices indicate that that variant exists
+                # and should be submitted to DECIPHER
+                if i != "0":
+                    # If the index is not zero go to that index in the
+                    # variant nomenclature and submit that variant
+                    variant_dict_list.append(
+                        {"data": {
+                            "type": "Variant",
+                            "attributes": {
+                                "person_id": patient_person_id,
+                                "variant_class": variant_type,
+                                "assembly": "GRCh38",
+                                "chr": variant["variant_id"].split(":")[0],
+                                "start": variant["variant_id"].split(":")[1],
+                                "ref_sequence": variant["variant_id"].split(":")[2],
+                                "alt_sequence": variant["variant_id"].split(":")[3].split(",")[int(i)-1],
+                                "inheritance": "unknown",
+                                "genotype": heterozygosity,
+                                "can_be_public": False,
+                            }
+                        }}
+                    )
 
     # Submit the variants for this case to DECIPHER
     for variant_dict in variant_dict_list:
