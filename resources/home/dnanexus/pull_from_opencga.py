@@ -4,39 +4,6 @@ import argparse
 from pyopencga.opencga_config import ClientConfiguration
 from pyopencga.opencga_client import OpencgaClient
 
-parser = argparse.ArgumentParser(
-                                description="",
-                                formatter_class=(
-                                   argparse.ArgumentDefaultsHelpFormatter
-                                   )
-                            )
-
-parser.add_argument("-k", "--configuration", help="OpenCGA login")
-parser.add_argument("-c", "--case",
-                    help="OpenCGA case ID that is to be uploaded to DECIPHER"
-                    )
-parser.add_argument("-s", "--study",
-                    help="OpenCGA study where this case is located"
-                    )
-
-args = parser.parse_args()
-
-# Extract and open JSON file containing OpenCGA login data
-login_details = args.configuration
-with open(login_details, 'r', encoding='utf-8') as f:
-    datastore = json.load(f)
-
-# Retrieve keys from JSON
-USER = datastore["USER"]
-PASSWORD = datastore["PASSWORD"]
-
-# Create an instance of OpencgaClient passing the configuration
-config = ClientConfiguration(
-    {"rest": {"host": "https://uat.eglh.app.zettagenomics.com/opencga/"}}
-)
-oc = OpencgaClient(config)
-oc.login(user=USER, password=PASSWORD)
-
 
 def extract_case_information(case, study):
     '''
@@ -126,7 +93,40 @@ def extract_case_information(case, study):
     return case_dict
 
 
-if args.case and args.study:
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(
+                                description="",
+                                formatter_class=(
+                                   argparse.ArgumentDefaultsHelpFormatter
+                                   )
+                            )
+
+    parser.add_argument("-k", "--configuration", help="OpenCGA login")
+    parser.add_argument("-c", "--case",
+                        help="OpenCGA case ID that is to be uploaded to DECIPHER"
+                        )
+    parser.add_argument("-s", "--study",
+                        help="OpenCGA study where this case is located"
+                        )
+
+    args = parser.parse_args()
+
+    # Extract and open JSON file containing OpenCGA login data
+    login_details = args.configuration
+    with open(login_details, 'r', encoding='utf-8') as f:
+        datastore = json.load(f)
+
+    # Retrieve keys from JSON
+    USER = datastore["USER"]
+    PASSWORD = datastore["PASSWORD"]
+
+    # Create an instance of OpencgaClient passing the configuration
+    config = ClientConfiguration(
+        {"rest": {"host": "https://uat.eglh.app.zettagenomics.com/opencga/"}}
+    )
+    oc = OpencgaClient(config)
+    oc.login(user=USER, password=PASSWORD)
+
     info_to_send_to_decipher = extract_case_information(args.case, args.study)
     with open(
         'case_phenotype_and_variant_data.json', 'w', encoding='utf-8'
