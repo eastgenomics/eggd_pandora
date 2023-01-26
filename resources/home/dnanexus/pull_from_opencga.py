@@ -20,7 +20,6 @@ parser.add_argument("-s", "--study",
                     )
 
 args = parser.parse_args()
-print(args)
 
 # Extract and open JSON file containing OpenCGA login data
 login_details = args.configuration
