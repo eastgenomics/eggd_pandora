@@ -71,14 +71,14 @@ def extract_case_information(case, study):
         else:
             print("Could not determine variant type")
 
-        heterozygosity = variant['studies'][0]['samples'][0]['data'][0]
+        zygosity = variant['studies'][0]['samples'][0]['data'][0]
 
         # Structure the variant information into a dictionary and add to a list
         # of variants that have been reviewed for this case
         data_dict = {
             'variant_id': variant_id,
             'type': variant_type,
-            'heterozygosity': heterozygosity
+            'zygosity': zygosity
             }
         variant_list.append(data_dict)
 

@@ -202,7 +202,7 @@ def calculate_zygosity(variant):
             zygosity (str): the zygosity of the variant
     '''
     # Split on '/' or '|' and store as a two-item list
-    variant_index = variant["heterozygosity"].replace("|", "/").split("/")
+    variant_index = variant["zygosity"].replace("|", "/").split("/")
     # If the first and second item in this list are not equal then it is
     # heterozygous, if they are different it is homozygous
     if variant_index[0] != variant_index[1]:
@@ -230,7 +230,7 @@ def format_variant_json_for_decipher(variant, person_id, zygosity, var_type):
 
     '''
     # Split the variant zygosity on '/' or '|' and store as a two-item list
-    variant_index = variant["heterozygosity"].replace("|", "/").split("/")
+    variant_index = variant["zygosity"].replace("|", "/").split("/")
 
     # The variant index will have two of the same value if the variant
     # is homozygous. Using set(variant_index) removes duplicate variant

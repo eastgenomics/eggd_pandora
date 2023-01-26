@@ -16,36 +16,36 @@ class TestDecipher():
         {
             'variant_id': "12:21912765:G:GA,GAA",
             'type': 'INDEL',
-            'heterozygosity': "1/2"
+            'zygosity': "1/2"
         },
         {
             "variant_id": "1:931131:C:CCCCT",
             "type": "DELETION",
-            "heterozygosity": "0/1"
+            "zygosity": "0/1"
         },
         {
             "variant_id": "1:927003:C:T",
             "type": "SNV",
-            "heterozygosity": "1|1"
+            "zygosity": "1|1"
         },
         {
             'variant_id': "12:21912765:G:GT,GTT,GTTT",
             'type': 'INDEL',
-            'heterozygosity': "1/3"
+            'zygosity': "1/3"
         },
         {
             "variant_id": "1:14907:A:G",
             "type": "SNV",
-            "heterozygosity": "0/0"
+            "zygosity": "0/0"
         }
     ]
 
-    def test_heterozygosity(self):
+    def test_zygosity(self):
         '''
         Test that the function calculate_zygosity() works out the zygosity from
         the input JSON case_phenotype_and_variant_data.json
         '''
-        # The heterozygosity data will be under the key case['variant_list']
+        # The zygosity data will be under the key case['variant_list']
         zygosities = []
         for variant in self.case['variant_list']:
             zygosity = calculate_zygosity(variant)
@@ -90,7 +90,7 @@ class TestDecipher():
         Test that for each variant in the variant list the correct ref and alt
         information is extracted and submitted
         This test ensures variants that are not present i.e. that have a 0
-        value in their heterozygosity are not submitted and that homozygous
+        value for their zygosity are not submitted and that homozygous
         variants are not submitted twice
         '''
         variant_list = []
