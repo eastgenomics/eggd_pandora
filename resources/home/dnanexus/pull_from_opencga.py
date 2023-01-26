@@ -87,13 +87,13 @@ def extract_case_information(case, study):
     # Currently variants are only searched for proband
 
     # Get the interpretation info for the Primary Interpretation
-    interpretation = clinical_analysis.get_result(result_pos=0)(
-        ['interpretation']
-    )
+    # interpretation = clinical_analysis.get_result(result_pos=0)(
+    #     ['interpretation']
+    # )
 
     # Extract the variant information from the Primary Interpretation
     variant_list = []
-    for variant in interpretation['primaryFindings']:
+    for variant in clinical_analysis.get_result(result_pos=0)['interpretation']['primaryFindings']:
         variant_type = variant['type']
 
         if variant_type in ("INDEL", "DELETION", "INSERTION"):
