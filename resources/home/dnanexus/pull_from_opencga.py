@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# Import ClientConfiguration and OpencgaClient class
 import json
 import argparse
 from pyopencga.opencga_config import ClientConfiguration
