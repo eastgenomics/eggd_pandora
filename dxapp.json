@@ -51,14 +51,14 @@
     ],
     "outputSpec": [
       {
-        "name": "output",
-        "label": "Output",
-        "class": "file",
+        "name": "link_to_patient_in_decipher",
+        "label": "Link to the patient record in DECIPHER",
+        "class": "string",
         "optional": true,
         "patterns": [
           "*"
         ],
-        "help": ""
+        "help": "This url links to the patient record in DECIPHER that was created or updated by  this run of eggd_pandora"
       }
     ],
     "runSpec": {

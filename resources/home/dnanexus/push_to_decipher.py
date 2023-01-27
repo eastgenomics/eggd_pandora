@@ -2,6 +2,7 @@
 import json                             # Need this to format response
 import argparse                         # To parse command line arguments
 import requests                         # This is needed to talk to the API
+import os                               # For export from script to shell
 from requests.adapters import HTTPAdapter, Retry
 
 # Base url
@@ -13,9 +14,10 @@ PEOPLE_URL = "people"
 VARIANT_URL = "variants"
 PHENOTYPE_URL = "phenotypes"
 
+
 def decipher_api_request(req_type, url, header, data=None):
     '''
-    Make a DECIPHER API request.This fucntion includes retries so can attempt
+    Make a DECIPHER API request.This function includes retries so can attempt
     again if the DECIPHER API is temporarily offline
         inputs:
             req_type (str): the API request type. This function only handles
@@ -49,6 +51,7 @@ def submit_patient_to_decipher(case, headers, submitter_id):
             submitter_id (int) = the ID of the user submitting data to DECIPHER
         outputs:
             patient_person_id (int) = the Person ID of the patient in DECIPHER
+            patient_id (int) = the Patient ID of the patient in DECIPHER
     """
     patient_person_id = None
 
@@ -76,7 +79,6 @@ def submit_patient_to_decipher(case, headers, submitter_id):
     response = decipher_api_request(
         "POST", API_URL + PATIENT_URL, headers, patient_json
     )
-    print(response.text)
     response_json = json.loads(response.text)
     print(response_json)
 
@@ -90,6 +92,7 @@ def submit_patient_to_decipher(case, headers, submitter_id):
                 'A patient with the local clinical reference number '
                 f'{proband_id} already exists in decipher'
                 )
+
             # If the patient exists, do an API "GET" request to get all the
             # existing patients in DECIPHER
             updated_response = decipher_api_request(
@@ -103,7 +106,7 @@ def submit_patient_to_decipher(case, headers, submitter_id):
                 if patient['attributes']['clinical_reference'] == proband_id:
 
                     # If the the clinical reference numbers match, request
-                    # the API to get the patient's "person ID"
+                    # the API to get the patient's "person ID" and patient ID
                     person_response = decipher_api_request(
                         "GET",
                         API_URL + PATIENT_URL + '/' + patient['id'] + '/people',
@@ -112,13 +115,15 @@ def submit_patient_to_decipher(case, headers, submitter_id):
                     print(person_response.text)
                     person_response_json = json.loads(person_response.text)
                     patient_person_id = person_response_json["data"][0]["id"]
+                    patient_id = person_response_json["data"][0]["attributes"]["patient_id"]
 
     # If the person ID has not been obtained by the previous for loop, aka
-    # the patient is not already in DECIPHER, set the patient ID
+    # the patient is not already in DECIPHER, set the patient ID and patient ID
     if not patient_person_id:
         patient_person_id = response_json['data'][0]['relationships']['People']['data'][0]['id']
+        patient_id = response_json['data'][0]["id"]
 
-    return patient_person_id
+    return patient_person_id, patient_id
 
 
 def submit_phenotypes_to_decipher(case, headers, patient_person_id):
@@ -180,6 +185,7 @@ def calculate_variant_type(variant):
             variant: the variant from the OpenCGA case json
         outputs:
             variant_type: the variant type in format compatible with DECIPHER
+            or None if the variant type input is not compatible with DECIPHER
     '''
     if variant["type"] in ["INDEL", "SNV", "INSERTION", "DELETION"]:
         variant_type = "sequence_variant"
@@ -191,7 +197,7 @@ def calculate_variant_type(variant):
             )
         variant_type = None
     return variant_type
-    
+
 
 def calculate_zygosity(variant):
     '''
@@ -199,10 +205,12 @@ def calculate_zygosity(variant):
         input:
             a variant
         output:
-            zygosity (str): the zygosity of the variant
+            zygosity (str): the zygosity of the variant or None if the input
+            for zygosity is invalid.
     '''
     # Split on '/' or '|' and store as a two-item list
     variant_index = variant["zygosity"].replace("|", "/").split("/")
+
     # If the first and second item in this list are not equal then it is
     # heterozygous, if they are different it is homozygous
     if variant_index[0] != variant_index[1]:
@@ -237,9 +245,7 @@ def format_variant_json_for_decipher(variant, person_id, zygosity, var_type):
     # indices ensuring that homozygous variants are not submitted twice
     variant_dict_list = []
 
-    print(set(variant_index))
-
-    # If the zygosity were 0/0 this should return None
+    # If the zygosity were 0/0 this function should return None
     if set(variant_index) == {"0"}:
         variant_dict_list = None
 
@@ -295,7 +301,25 @@ def submit_variants_to_decipher(case, headers, patient_person_id):
                 print(response.text)
 
 
-if __name__ == "__main__":
+def create_decipher_url(patient_id):
+    '''
+    Take a patient person ID and create a url to allow the user to view the
+    patient that they have created or updated in DECIPHER
+        inputs:
+            patient_id (int): the patient ID in DECIPHER
+        outputs:
+            decipher_url (str): a URL that links to the DECIPHER patient record
+    '''
+    decipher_url = f"https://www.deciphergenomics.org/patient/{patient_id}/"
+    return decipher_url
+
+
+def main():
+    '''
+    The entry point function of this script. Parses the command line arguments
+    and extracts the JSON made by the pull_to_opencga.py script. Calls other
+    functions in the script to submit data to DECIPHER
+    '''
     # Use parser to read command line arguments into the script
     parser = argparse.ArgumentParser(
                                     description="",
@@ -305,7 +329,7 @@ if __name__ == "__main__":
                                 )
 
     parser.add_argument("-k", "--configuration", help="API keys for DECIPHER")
-    parser.add_argument("-c", "--data_for_decipher", help="case data in JSON file")
+    parser.add_argument("-c", "--data_for_decipher", help="case data JSON")
     parser.add_argument("-s", "--submitter", help="DECIPHER submitter ID")
 
     args = parser.parse_args()
@@ -324,15 +348,33 @@ if __name__ == "__main__":
         "X-Auth-Token-Client": CLIENT_KEY,
         "X-Auth-Token-Account": USER_KEY
     }
+
+    # Access data from JSON created by pull_from_opencga.py script
     data_to_submit = args.data_for_decipher
     with open(data_to_submit, 'r', encoding='utf-8') as f:
         data_to_submit_json = json.load(f)
-    decipher_person_id = submit_patient_to_decipher(
+
+    # Submit this to the function that creates a patient, retrieving the Person
+    # ID (needed to add variants and phenotypes) and the Patient ID (needed to
+    # generate a URL to the patient record in DECIPHER)
+    decipher_person_id, decipher_patient_id = submit_patient_to_decipher(
         data_to_submit_json, decipher_api_request_headers, args.submitter
         )
+
+    # Submit variants and phenotypes from JSON created by pull_from_opencga.py
     submit_phenotypes_to_decipher(
         data_to_submit_json, decipher_api_request_headers, decipher_person_id
         )
     submit_variants_to_decipher(
         data_to_submit_json, decipher_api_request_headers, decipher_person_id
         )
+
+    # Generate URL linking the patient in DECIPHER and add to text file so it
+    # can be uploaded as an output by the pandora.sh script
+    link_to_patient_in_decipher = create_decipher_url(decipher_patient_id)
+    with open('decipher_url.txt', 'w', encoding='utf-8') as f:
+        f.write(link_to_patient_in_decipher)
+
+
+if __name__ == "__main__":
+    main()
