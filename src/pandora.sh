@@ -19,6 +19,6 @@ python3 /home/dnanexus/push_to_decipher.py \
     --data_for_decipher case_phenotype_and_variant_data.json \
     --submitter $decipher_submitter_id
 
-# Extract and upload URL to case patient record in DECIPHER
+# Extract URL to case patient record in DECIPHER and upload as app output
 DECIPHER_URL=$(cat decipher_url.txt)
 dx-jobutil-add-output link_to_patient_in_decipher "$DECIPHER_URL" --class=string
