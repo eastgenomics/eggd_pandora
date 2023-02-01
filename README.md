@@ -23,6 +23,6 @@ This app runs the script pandora.sh which runs pull_from_opencga.py, which is a 
 The pandora.sh script then inputs this JSON to the push_to_decipher.py script which reformats this information and submits it to DECIPHER
 
 ## What does this app output?
-This app creates a DECIPHER patient record for a case in OpenCGA and adds HPO phenotype terms and intepreted variants. The eggd_pandora app will create a new proband patient record in DECIPHER if the patient does not already exist, or add the variants to an existing patient.
+This app creates a DECIPHER patient record for a case in OpenCGA and adds HPO phenotype terms and intepreted variants. The eggd_pandora app will create a new proband patient record in DECIPHER if the patient does not already exist, or add the variants to an existing patient. The app outputs a URL that links to the new or updated patient record in DECIPHER.
 
 ## This app was made by East GLH
