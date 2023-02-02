@@ -199,7 +199,7 @@ def calculate_variant_type(variant):
     return variant_type
 
 
-def calculate_zygosity(variant):
+def calculate_zygosity(variant, sex):
     '''
     Work out the zygosity from the OpenCGA case json for the case['variant']
         input:
@@ -220,6 +220,11 @@ def calculate_zygosity(variant):
     else:
         print(f"Could not determine zygosity from the input {variant_index}")
         zygosity = None
+    
+    # handle hemizygous variants if patient sex is male
+    if sex == "46xy" and variant["variant_id"].split(":")[0] in ['X', 'Y']:
+        zygosity = "hemizygous"
+
     return zygosity
 
 
@@ -287,7 +292,7 @@ def submit_variants_to_decipher(case, headers, patient_person_id):
     """
     for variant in case['variant_list']:
         variant_type = calculate_variant_type(variant)
-        zygosity = calculate_zygosity(variant)
+        zygosity = calculate_zygosity(variant, case["sex"])
 
         # Submit variants only if variant type and zygosity have been worked
         # out correctly
