@@ -210,7 +210,7 @@ def calculate_zygosity(variant, sex):
     '''
     # Split on '/' or '|' and store as a two-item list
     variant_index = variant["zygosity"].replace("|", "/").split("/")
-
+    print(sex)
     # If the first and second item in this list are not equal then it is
     # heterozygous, if they are different it is homozygous
     if variant_index[0] != variant_index[1]:
@@ -222,7 +222,7 @@ def calculate_zygosity(variant, sex):
         zygosity = None
     
     # handle hemizygous variants if patient sex is male
-    if sex == "46xy" and variant["variant_id"].split(":")[0] in ['X', 'Y']:
+    if sex == "46_xy" and variant["variant_id"].split(":")[0] in ['X', 'Y']:
         zygosity = "hemizygous"
 
     return zygosity
