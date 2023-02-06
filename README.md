@@ -27,7 +27,7 @@ This app creates a DECIPHER patient record for a case in OpenCGA and adds HPO ph
 
 ## App notes and variant input limitations
 * eggd_pandora only works for SNVs, indels, insertions and deletions.
-* eggd_pandora assumes that patients that have their sex recorded in OpenCGA as "male" are XY and as "female" are XX.
+* eggd_pandora assumes that patients that have their sex recorded in OpenCGA as "male" are 46XY and as "female" are 46XX.
 * DECIPHER only accepts sequence variants less than 100 bp in length.
 * DECIPHER only accepts variants on build GRCh38.
 
