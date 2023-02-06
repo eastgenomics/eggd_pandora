@@ -25,10 +25,10 @@ The pandora.sh script then inputs this JSON to the push_to_decipher.py script wh
 ## What does this app output?
 This app creates a DECIPHER patient record for a case in OpenCGA and adds HPO phenotype terms and intepreted variants. The eggd_pandora app will create a new proband patient record in DECIPHER if the patient does not already exist, or add the variants to an existing patient. The app outputs a URL that links to the new or updated patient record in DECIPHER.
 
-## App notes
-* DECIPHER only accepts sequence variants less than 100 bp in length.
+## App notes and variant input limitations
 * eggd_pandora only works for SNVs, indels, insertions and deletions.
-* DECIPHER only accepts variants on build GRCh38
-* eggd_pandora assumes that patients with sex record in OpenCGA as "male" are XY and as "female" are XX.
+* eggd_pandora assumes that patients that have their sex recorded in OpenCGA as "male" are XY and as "female" are XX.
+* DECIPHER only accepts sequence variants less than 100 bp in length.
+* DECIPHER only accepts variants on build GRCh38.
 
 ## This app was made by East GLH
