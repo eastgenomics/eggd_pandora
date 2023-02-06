@@ -210,7 +210,7 @@ def calculate_zygosity(variant, sex):
     '''
     # Split on '/' or '|' and store as a two-item list
     variant_index = variant["zygosity"].replace("|", "/").split("/")
-    print(sex)
+
     # If the first and second item in this list are not equal then it is
     # heterozygous, if they are different it is homozygous
     if variant_index[0] != variant_index[1]:
@@ -254,7 +254,7 @@ def format_variant_json_for_decipher(variant, person_id, zygosity, var_type):
     if set(variant_index) == {"0"}:
         variant_dict_list = None
 
-    for i in set(variant_index):
+    for i in sorted(set(variant_index)):
         # All non-zero indices indicate that that variant exists
         # and should be submitted to DECIPHER
         if i != "0":

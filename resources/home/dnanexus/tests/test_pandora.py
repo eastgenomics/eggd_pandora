@@ -49,7 +49,7 @@ class TestDecipher():
         # The zygosity data will be under the key case['variant_list']
         zygosities = []
         for variant in self.case['variant_list']:
-            zygosity = calculate_zygosity(variant)
+            zygosity = calculate_zygosity(variant, "46_xx")
             zygosities.append(zygosity)
 
         assert zygosities == [
@@ -59,6 +59,21 @@ class TestDecipher():
             "heterozygous",
             "homozygous"
         ]
+
+    @staticmethod
+    def test_hemizygous_variants():
+        '''
+        Test that calculate_zygosity function works for hemizygous variants
+        '''
+        # Create test variant on Y that should be hemizygous
+        test_variant = {
+            "variant_id": "Y:2790748:T:TA",
+            "type": "SNV",
+            "zygosity": "0/1"
+        }
+        sex = '46_xy'
+        test_zygosity = calculate_zygosity(test_variant, sex)
+        assert test_zygosity == "hemizygous"
 
     def test_variant_type_calculated_correctly(self):
         '''
