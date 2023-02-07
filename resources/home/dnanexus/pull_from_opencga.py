@@ -127,9 +127,9 @@ def extract_clinvar_information(proband):
     Retrieve "disorder" and "date evaluated" which would be required for API
     submission to ClinVar if this functionality were added to eggd_pandora in
     the future via a push_to_clinvar.py script.
-    These funcaiton is not called out as this functionality does not exist. If
-    this functionality were added in the future, these variables would be added
-    to format_required_data_into_case_json() as inputs.
+    This function is not currently called as this functionality does not exist.
+    If this functionality were added in the future, these variables would be
+    added to format_required_data_into_case_json() as inputs.
         inputs:
             proband (dict): the proband information from the OpenCGA analysis
             client
