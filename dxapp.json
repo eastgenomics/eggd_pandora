@@ -1,0 +1,96 @@
+{
+    "name": "eggd_pandora",
+    "title": "eggd_pandora",
+    "summary": "Takes patient and variant information and pushes into DECIPHER",
+    "dxapi": "1.0.0",
+    "version": "1.0.0",
+    "properties": {
+      "githubRelease": "v1.0.0"
+    },
+    "inputSpec": [
+        {
+        "name": "decipher_api_keys",
+        "label": "DECIPHER API keys",
+        "help": "JSON file containing DECIPHER client key and user key",
+        "class": "file",
+        "default": {"$dnanexus_link": "file-GFk6F78462ZvQ46K8xKX5z61"},
+        "patterns": ["*.json"],
+        "optional": false
+        },
+        {
+        "name": "opencga_config",
+        "label": "OpenCGA configuration",
+        "help": "JSON file containing username and password for OpenCGA API acess",
+        "class": "file",
+        "default": {"$dnanexus_link": "file-GKQgxp0462ZvY6zx2QY76jbg"},
+        "patterns": ["*.json"],
+        "optional": false
+        },
+        {
+        "name": "opencga_case_id",
+        "label": "OpenCGA case ID",
+        "help": "OpenCGA case ID of the case to be uploaded to DECIPHER",
+        "class": "string",
+        "optional": false
+        },
+        {
+        "name": "opencga_study_name",
+        "label": "OpenCGA study name",
+        "help": "OpenCGA study containing the case to be uploaded to Decipher in the format user@project:study. Study and project can be specified using either name or UUID.",
+        "class": "string",
+        "default": "emee-glh@decipher_project:rare_disease_38",
+        "optional": false
+        },
+        {
+        "name": "decipher_submitter_id",
+        "label": "DECIPHER ID of submitter",
+        "help": "The account_id of the DECIPHER user who is the responsible for the patient record",
+        "class": "int",
+        "optional": false
+        }
+    ],
+    "outputSpec": [
+      {
+        "name": "link_to_patient_in_decipher",
+        "label": "Link to the patient record in DECIPHER",
+        "class": "string",
+        "optional": true,
+        "patterns": [
+          "*"
+        ],
+        "help": "This url links to the patient record in DECIPHER that was created or updated by  this run of eggd_pandora"
+      }
+    ],
+    "runSpec": {
+      "distribution": "Ubuntu",
+      "release": "20.04",
+      "version": "0",
+      "interpreter": "bash",
+      "file": "src/pandora.sh",
+      "timeoutPolicy": {
+        "*": {
+          "hours": 1
+        }
+      }
+    },
+    "developers":[
+      "org-emee_1"
+    ],
+    "authorizedUsers": [
+      "org-emee_1"
+    ],
+    "access": {
+      "project": "CONTRIBUTE",
+      "network": ["*"],
+      "allProjects": "VIEW"
+    },
+    "regionalOptions": {
+      "aws:eu-central-1": {
+        "systemRequirements": {
+          "*": {
+            "instanceType": "mem1_ssd1_v2_x4"
+          }
+        }
+      }
+    }
+  }
