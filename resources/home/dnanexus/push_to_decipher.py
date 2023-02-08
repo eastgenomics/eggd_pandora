@@ -220,7 +220,7 @@ def calculate_zygosity(variant, sex):
     else:
         print(f"Could not determine zygosity from the input {variant_index}")
         zygosity = None
-    
+
     # handle hemizygous variants if patient sex is male
     if sex == "46_xy" and variant["variant_id"].split(":")[0] in ['X', 'Y']:
         zygosity = "hemizygous"
