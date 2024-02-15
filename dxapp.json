@@ -2,10 +2,10 @@
     "name": "eggd_pandora",
     "title": "eggd_pandora",
     "summary": "Takes patient and variant information and pushes into DECIPHER",
-    "dxapi": "1.0.0",
-    "version": "1.0.0",
+    "dxapi": "2.0.0",
+    "version": "2.0.0",
     "properties": {
-      "githubRelease": "v1.0.0"
+      "githubRelease": "v2.0.0"
     },
     "inputSpec": [
         {
@@ -15,7 +15,7 @@
         "class": "file",
         "default": {"$dnanexus_link": "file-GFk6F78462ZvQ46K8xKX5z61"},
         "patterns": ["*.json"],
-        "optional": false
+        "optional": true
         },
         {
         "name": "opencga_config",
@@ -24,14 +24,14 @@
         "class": "file",
         "default": {"$dnanexus_link": "file-GKQgxp0462ZvY6zx2QY76jbg"},
         "patterns": ["*.json"],
-        "optional": false
+        "optional": true
         },
         {
         "name": "opencga_case_id",
         "label": "OpenCGA case ID",
         "help": "OpenCGA case ID of the case to be uploaded to DECIPHER",
         "class": "string",
-        "optional": false
+        "optional": true
         },
         {
         "name": "opencga_study_name",
@@ -39,14 +39,50 @@
         "help": "OpenCGA study containing the case to be uploaded to Decipher in the format user@project:study. Study and project can be specified using either name or UUID.",
         "class": "string",
         "default": "emee-glh@decipher_project:rare_disease_38",
-        "optional": false
+        "optional": true
         },
         {
         "name": "decipher_submitter_id",
         "label": "DECIPHER ID of submitter",
         "help": "The account_id of the DECIPHER user who is the responsible for the patient record",
         "class": "int",
+        "optional": true
+        },
+        {
+        "name": "clinvar_api_key",
+        "label": "Organisation API key for ClinVar",
+        "help": "",
+        "class": "file",
+        "patterns": ["*.txt"],
+        "optional": true
+        },
+        {
+        "name": "running_mode",
+        "label": "Running mode to run eggd_pandora in",
+        "help": "",
+        "class": "string",
         "optional": false
+        },
+        {
+        "name": "clinvar_testing",
+        "label": "If true, will submit variants to test API endpoint, if false, will use live API endpoint",
+        "help": "",
+        "class": "boolean",
+        "optional": true
+        },
+        {
+        "name": "clinvar_json",
+        "label": "JSON file to submit to ClinVar",
+        "help": "",
+        "class": "file",
+        "optional": true
+        },
+        {
+        "name": "variant_csv",
+        "label": "A csv file with the variant data that is to be submitted to ClinVar",
+        "help": "",
+        "class": "file",
+        "optional": true
         }
     ],
     "outputSpec": [
@@ -58,7 +94,21 @@
         "patterns": [
           "*"
         ],
-        "help": "This url links to the patient record in DECIPHER that was created or updated by  this run of eggd_pandora"
+        "help": "This url links to the patient record in DECIPHER that was created or updated by this run of eggd_pandora"
+      },
+      {
+      "name": "clinvar_json",
+      "label": "JSON file for submission to ClinVar",
+      "help": "",
+      "class": "array:file",
+      "optional": true
+      },
+      {
+      "name": "submission_id",
+      "label": "Submission ID(s) to ClinVar",
+      "help": "",
+      "class": "file",
+      "optional": true
       }
     ],
     "runSpec": {
