@@ -14,9 +14,14 @@ def extract_clinvar_information(variant):
         variant["Germline classification"]
         )
     comment = check_comment(variant["Comment on classification"])
-    assembly = check_assembly(variant["Ref_genome"])
+    assembly = check_assembly(variant["Ref genome"])
 
     clinvar_dict = {
+        'assertionCriteria': {
+            'url': 'https://submit.ncbi.nlm.nih.gov/api/2.0/files/kf4l0sn8/uk-'\
+                'practice-guidelines-for-variant-classification-v4-01-2020.pd'\
+                'f/?format=attachment'
+            },
         'clinvarSubmission': [{
             'clinicalSignificance': {
                 'clinicalSignificanceDescription': clinical_significance,
@@ -50,6 +55,8 @@ def extract_clinvar_information(variant):
             },
         }],
     }
+
+    clinvar_dict = if_nuh(variant["Organisation ID"], clinvar_dict)
 
     return clinvar_dict
 
@@ -119,28 +126,24 @@ def check_comment(comment):
 
 def check_assembly(ref_genome):
     '''
-    Work out assembly from the reference genome used to process the data
-    In our dias pipeline this is the reference genome passed to eggd_conductor
-    as "stage-sentieon_dnaseq.genome_fastagz" in the config file.
+    Work out assembly from the reference genome used to by VEP to process the
+    data
+    In our dias pipeline, this is the RefSeq cache in VEP 105
 
-    For GRCh37, this will be hs37d5.fa
-    For GRCh38, this will be GRCh38_GIABv3_no_alt_analysis_set_maskedGRC_decoys
-    _MAP2K3_KMT2C_KCNJ18_noChr.fasta.gz
+    For GRCh37, this will be GRCh37.p13
+    For GRCh38, this will be GRCh38.p13
 
     Inputs:
-        ref_genome (str): name of the reference genome used to make the VCF
+        ref_genome (str): name of the reference genome for VEP for annotation
     Outputs:
         assembly (str): genome build of the reference genome (GRCh37 or GRCh38)
     '''
-    if ref_genome.split('.')[0] == "hs37d5":
+    if ref_genome == "GRCh37.p13":
         assembly = "GRCh37"
         print(
             f"Selected GRCh37 as assembly, because ref genome is {ref_genome}"
         )
-    elif ref_genome.split('.')[0] == (
-        "GRCh38_GIABv3_no_alt_analysis_set_maskedGRC_decoys_MAP2K3_KMT2C_KCN" \
-        "J18_noChr"
-    ):
+    elif ref_genome == "GRCh38.p13":
         assembly = "GRCh38"
         print(
             f"Selected GRCh38 as assembly, because ref genome is {ref_genome}"
@@ -150,6 +153,29 @@ def check_assembly(ref_genome):
             f"Could not determine genome build from ref genome {ref_genome}"
         )
     return assembly
+
+def if_nuh(organisation_id, clinvar_dict):
+    '''
+    Format submission correctly if this is an NUH case
+    Inputs:
+        organisation_id (int): ClinVar organisation ID for submitting lab (CUH
+        or NUH)
+        clinvar_dict (dict): dictionary of info to submit to clinvar
+    Ouputs:
+        clinvar_dict (dict): dictionary of info to submit to clinvar
+    '''
+    # If NUH
+    if organisation_id == 509428:
+        clinvar_dict['behalfOfID'] = organisation_id
+    # If CUH, no changes need to be made
+    elif organisation_id == 288359:
+        pass
+    else:
+        raise ValueError(
+            f"Value given for organisation ID {organisation_id} is not a valid"
+            " option.\nValid options:\n288359 - CUH\n509428 - NUH"
+        )
+    return clinvar_dict
 
 def main():
     '''
@@ -161,24 +187,19 @@ def main():
                                    argparse.ArgumentDefaultsHelpFormatter
                                    )
                             )
-    
+
     parser.add_argument('--variant_csv')
     args = parser.parse_args()
 
-    with open(args.variant_csv, 'r') as f:
+    with open(args.variant_csv, 'r', encoding='utf-8') as f:
         df = pd.read_csv(f)
 
     for index, row in df.iterrows():
         clinvar_dict = extract_clinvar_information(row)
-        if 'Instrument ID' and 'Specimen ID' in row:
-            prefix = (
-                str(row["Instrument ID"]) + '-' + row["Specimen ID"]
-                + '-' + row['Local ID']
-            )
-        else:
-            file_name = args.variant_csv.split('/')[-1].split('.')[0]
-            print(file_name)
-            prefix = file_name + '-' + row['Local ID']
+
+        file_name = args.variant_csv.split('/')[-1].split('.')[0]
+        print(file_name)
+        prefix = file_name + '-' + row['Local ID']
 
         with open(f"{prefix}_clinvar_data.json", 'w', encoding='utf-8') as f:
             json.dump(clinvar_dict, f, ensure_ascii=False, indent=4)

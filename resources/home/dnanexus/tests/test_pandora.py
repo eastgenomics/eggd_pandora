@@ -16,10 +16,12 @@ from pull_from_opencga import (
 from pull_from_csv import (
     check_clinical_significance,
     extract_clinvar_information,
-    check_assembly
+    check_assembly,
+    if_nuh
 )
 from push_to_clinvar import(
-   select_api_url
+   select_api_url,
+   make_headers
 )
 
 class TestDecipher():
@@ -340,6 +342,11 @@ class TestCSV():
         clinvar_json = extract_clinvar_information(variant)
 
         assert clinvar_json == ({
+            'assertionCriteria': {
+                'url': 'https://submit.ncbi.nlm.nih.gov/api/2.0/files/kf4l0sn8'\
+                    '/uk-practice-guidelines-for-variant-classification-v4-01'\
+                    '-2020.pdf/?format=attachment'
+                },
             'clinvarSubmission': [{
                 "clinicalSignificance": {
                     "clinicalSignificanceDescription": "Pathogenic",
@@ -386,20 +393,17 @@ class TestCSV():
 
     def test_assembly_38(self):
         '''
-        Check build 38 is selected if dias standard build 38 reference genome
-        is used
+        Check build 38 is selected if dias standard VEP build 38 reference
+        genome is used
         '''
-        assert check_assembly(
-            "GRCh38_GIABv3_no_alt_analysis_set_maskedGRC_decoys_MAP2K3_KMT2C"\
-            "_KCNJ18_noChr.fasta.gz"
-            ) == "GRCh38"
+        assert check_assembly("GRCh38.p13") == "GRCh38"
 
     def test_assembly_37(self):
         '''
-        Check build 37 is selected if dias standard build 37 reference genome
-        is used
+        Check build 37 is selected if dias standard VEP build 37 reference
+        genome is used
         '''
-        assert check_assembly("hs37d5.fa.gz") == "GRCh37"
+        assert check_assembly("GRCh37.p13") == "GRCh37"
 
     def test_assembly_invalid(self):
         '''
@@ -409,10 +413,35 @@ class TestCSV():
         with pytest.raises(RuntimeError):
             error = check_assembly("incorrect_reference_genome.fa.gz")
 
+    def test_nuh_org_id_added(self):
+        '''
+        Test that behalfOfID field is added if organisation is NUH
+        '''
+        nuh_dict = {}
+        nuh_dict = if_nuh(509428, nuh_dict)
+        assert nuh_dict == {'behalfOfID': 509428}
+
+    def test_no_change_if_cuh(self):
+        '''
+        Test that clinvar_dict is not changed if organisation is CUH
+        '''
+        cuh_dict = {}
+        cuh_dict = if_nuh(288359, cuh_dict)
+        assert cuh_dict == {}
+
+    def test_error_if_invalid_org_id(self):
+        '''
+        Test that error is raised if organisation is invalid
+        '''
+        invalid_dict = {}
+        with pytest.raises(ValueError):
+            if_nuh(12345, invalid_dict)
+
 class TestClinvar():
     '''
     Tests for push_to_clinvar.py script
     '''
+    api_key = 'xxxxxxxx'
     def test_select_api_url(self):
         '''
         Test error raised if value given to select_api_url is neither True nor
@@ -428,6 +457,24 @@ class TestClinvar():
         '''
         url = select_api_url(True)
         assert url == "https://submit.ncbi.nlm.nih.gov/apitest/v1/submissions"
+    
+    def test_make_headers_works(self):
+        '''
+        Test that headers are constructed correctly
+        '''
+        headers = make_headers(self.api_key)
+        assert headers == {
+            "SP-API-KEY": 'xxxxxxxx',
+            "Content-type": "application/json"
+        }
+    
+    def test_make_headers_with_non_string_input(self):
+        '''
+        Check TypeError raised when non string input to make_headers
+        '''
+        with pytest.raises(TypeError):
+            error = make_headers(12345)
+
 
 if __name__ == "__main__":
     opencga = TestOpenCGA()

@@ -71,8 +71,8 @@
         "optional": true
         },
         {
-        "name": "clinvar_json",
-        "label": "JSON file to submit to ClinVar",
+        "name": "submission_ids_file",
+        "label": "Submission IDs to query in ClinVar",
         "help": "",
         "class": "file",
         "optional": true
@@ -97,15 +97,15 @@
         "help": "This url links to the patient record in DECIPHER that was created or updated by this run of eggd_pandora"
       },
       {
-      "name": "clinvar_json",
-      "label": "JSON file for submission to ClinVar",
+      "name": "submission_id",
+      "label": "Submission ID(s) to ClinVar",
       "help": "",
-      "class": "array:file",
+      "class": "file",
       "optional": true
       },
       {
-      "name": "submission_id",
-      "label": "Submission ID(s) to ClinVar",
+      "name": "accession_id",
+      "label": "Accession ID(s) for variants submitted to ClinVar",
       "help": "",
       "class": "file",
       "optional": true

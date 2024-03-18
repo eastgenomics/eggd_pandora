@@ -4,14 +4,19 @@ from requests.adapters import HTTPAdapter, Retry
 import argparse
 import os.path
 
-def make_headers(api_key):
+def make_headers(api_key: str):
     '''
     Construct headers using the contents of a file containing the API key
     '''
-    headers = {
-        "SP-API-KEY": api_key,
-        "Content-type": "application/json"
-    }
+    if not isinstance(api_key, str):
+        raise TypeError(
+            'Value given as ClinVar API key is not a string'
+        )
+    else:
+        headers = {
+            "SP-API-KEY": api_key,
+            "Content-type": "application/json"
+        }
     return headers
 
 def select_api_url(testing):
@@ -22,12 +27,12 @@ def select_api_url(testing):
     if testing in ["True", True, "true"]:
         api_url = "https://submit.ncbi.nlm.nih.gov/apitest/v1/submissions"
         print(
-            f"Running in test mode, submitting to {api_url}"
+            f"Running in test mode, using {api_url}"
         )
     elif testing in ["False", False, "false"]:
-        api_url = "not_here_yet_for_safety_reasons"
+        api_url = "https://submit.ncbi.nlm.nih.gov/api/v1/submissions/"
         print(
-            f"Running in live mode, submitting to {api_url}"
+            f"Running in live mode, using {api_url}"
         )
     else:
         raise RuntimeError(
@@ -56,13 +61,41 @@ def clinvar_api_request(url, header, data):
     }
 
     print("JSON to submit:")
-    print(json.dumps(clinvar_data, indent=4))
+    print(json.dumps(clinvar_data, indent='⠀⠀'))
 
     s = requests.Session()
     retries = Retry(total=10, backoff_factor=0.5)
     s.mount('https://', HTTPAdapter(max_retries=retries))
     response = s.post(url, data=json.dumps(clinvar_data), headers=header)
     return response
+
+def write_response_to_file(local_id, response):
+    '''
+    Write the response of the ClinVar API submission to a file. This script
+    will be ran multiple times per sample if there is more than one variant for
+    submission to ClinVar, so we need to check if the submission response file
+    already exists + make it if it does not.
+    Inputs:
+        local_id (str): local ID for the variant
+        response (dict): response json from the ClinVar API, converted to dict
+    Outputs:
+        None, modifies/creates file for upload to DNAnexus
+    '''
+    if not os.path.exists('submission_ids.txt'):
+        with open('submission_ids.txt', 'a', encoding='utf-8') as f:
+            f.write(
+                'Local_ID\tClinVar_Submission_ID\n'
+            )
+
+    if 'id' in response:
+        # If the submission response has an 'id' key then submission has been
+        # successful
+        submission_id = response['id']
+        with open('submission_ids.txt', 'a', encoding='utf-8') as f:
+            f.write(f'{local_id}\t{submission_id}\n')
+    else:
+        with open('submission_ids.txt', 'a', encoding='utf-8') as f:
+            f.write(f'{local_id}\tSubmission_error_check_logs\n')
 
 def main():
     '''
@@ -91,24 +124,15 @@ def main():
     headers = make_headers(api_key)
 
     response = clinvar_api_request(api_url, headers, data)
-    submission = response.json()
-    print(json.dumps(submission), indent='⠀⠀')
+    response_dict = response.json()
+
+    # print to logs, use braille blank character so DNAnexus won't strip
+    # whitespace
+    print(json.dumps(response_dict, indent='⠀⠀'))
 
     local_id = data["clinvarSubmission"][0]["localID"]
 
-    if not os.path.exists('submission_ids.txt'):
-        with open('submission_ids.txt', 'a', encoding='utf-8') as f:
-            f.write(
-                'Local_ID\tClinVar_Submission_ID\n'
-            )
-
-    if 'id' in submission:
-        submission_id = submission['id']
-        with open('submission_ids.txt', 'a', encoding='utf-8') as f:
-            f.write(f'{local_id}\t{submission_id}\n')
-    else:
-        with open('submission_ids.txt', 'a', encoding='utf-8') as f:
-            f.write(f'{local_id}\tSubmission_error_check_logs\n')
+    write_response_to_file(local_id, response_dict)
 
 if __name__ == "__main__":
     main()
