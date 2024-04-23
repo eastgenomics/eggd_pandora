@@ -36,6 +36,12 @@ then
     mkdir -p /home/dnanexus/out/submission_id
     mv submission_ids.txt /home/dnanexus/out/submission_id
 
+    python3 /home/dnanexus/get_clinvar_accession.py \
+        --submission_file /home/dnanexus/out/submission_id/submission_ids.txt \
+        --clinvar_api_key /home/dnanexus/in/clinvar_api_key/*.txt
+    mkdir /home/dnanexus/out/accession_id
+    mv accession_ids.txt /home/dnanexus/out/accession_id
+
     dx-upload-all-outputs
 elif [ "$running_mode" = "get_clinvar_accession" ]
 then
