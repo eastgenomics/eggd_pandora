@@ -1,6 +1,7 @@
 import os
 import json
 import argparse
+import time
 import requests
 import pandas as pd
 from push_to_clinvar import make_headers, select_api_url
@@ -81,6 +82,7 @@ def get_accession_id(api_response):
             " not have been processed yet. Please check back again or check "
             f"API response for more information\n {api_response}"
         )
+
     return accession
 
 def write_accession_id_to_file(local_id, accession):
@@ -103,6 +105,32 @@ def write_accession_id_to_file(local_id, accession):
 
     with open('accession_ids.txt', 'a', encoding='utf-8') as f:
         f.write(f'{local_id}\t{accession}\n')
+
+def run_submission_status_check(local_id, submission_id, headers, api_url, counter):
+    '''
+    Run the submission status check, if accession_id is returned, quit function
+    if not, wait 5 mins, run again
+    Function will quit after 12 attempts = an hour of querying the API
+    '''
+    print(f"Querying {api_url} with {submission_id}")
+    response = submission_status_check(submission_id, headers, api_url)
+    accession_id = get_accession_id(response)
+    if accession_id is not None:
+        print(
+            f"ClinVar accession ID found to be {accession_id}. \nWriting to "
+            "file..."
+        )
+        write_accession_id_to_file(local_id, accession_id)
+    else:
+        while counter < 12:
+            time.sleep(300)
+            counter += 1
+            run_submission_status_check(
+                local_id, submission_id, headers, api_url, counter
+            )
+            accession_id = get_accession_id(response)
+        write_accession_id_to_file(local_id, "NOT_FOUND")
+
 
 def main():
     '''
@@ -136,25 +164,22 @@ def main():
         print(df)
 
         for index, row in df.iterrows():
-            submission_id = row["Submission_ID"]
-            local_id = row["Local_ID"]
-            print(
-                f"Querying {api_url} with {submission_id}"
+            run_submission_status_check(
+                row["Local_ID"],
+                row["Submission_ID"],
+                headers,
+                api_url,
+                1
             )
-            response = submission_status_check(submission_id, headers, api_url)
-            print(response)
-            accession_id = get_accession_id(response)
-            write_accession_id_to_file(local_id, accession_id)
 
     if args.submission_id:
-        response = submission_status_check(args.submission_id, headers, api_url)
-        print(
-            f"Querying {api_url} with {args.submission_id}"
-            )
-        print(response)
-        accession_id = get_accession_id(response)
-        write_accession_id_to_file(args.local_id, accession_id)
-
+        run_submission_status_check(
+            args.local_id,
+            args.submission_id,
+            headers,
+            api_url,
+            1
+        )
 
 if __name__ == "__main__":
     main()
