@@ -322,7 +322,7 @@ class TestCSV():
         significance is not a valid string for ClinVar.
         '''
         with pytest.raises(RuntimeError):
-            error_info = check_clinical_significance("Invalid")
+            check_clinical_significance("Invalid")
 
     def test_clinical_significance_empty(self):
         '''
@@ -331,7 +331,7 @@ class TestCSV():
         dataframe empty for clinical significance was empty.
         '''
         with pytest.raises(RuntimeError):
-            error_info = check_clinical_significance("nan")
+            check_clinical_significance("nan")
 
     def test_extract_clinvar_information(self):
         '''
@@ -411,31 +411,26 @@ class TestCSV():
         check_assembly function
         '''
         with pytest.raises(RuntimeError):
-            error = check_assembly("incorrect_reference_genome.fa.gz")
+            check_assembly("incorrect_reference_genome.fa.gz")
 
     def test_nuh_org_id_added(self):
         '''
         Test that behalfOfID field is added if organisation is NUH
         '''
-        nuh_dict = {}
-        nuh_dict = if_nuh(509428, nuh_dict)
-        assert nuh_dict == {'behalfOfID': 509428}
+        assert if_nuh(509428, {}) == {'behalfOfID': 509428}
 
     def test_no_change_if_cuh(self):
         '''
         Test that clinvar_dict is not changed if organisation is CUH
         '''
-        cuh_dict = {}
-        cuh_dict = if_nuh(288359, cuh_dict)
-        assert cuh_dict == {}
+        assert if_nuh(288359, {}) == {}
 
     def test_error_if_invalid_org_id(self):
         '''
         Test that error is raised if organisation is invalid
         '''
-        invalid_dict = {}
         with pytest.raises(ValueError):
-            if_nuh(12345, invalid_dict)
+            if_nuh(12345, {})
 
 class TestClinvar():
     '''
@@ -448,32 +443,31 @@ class TestClinvar():
         False
         '''
         with pytest.raises(RuntimeError):
-            error = select_api_url("Undecided")
+            select_api_url("Undecided")
 
     def test_select_testing_api_url(self):
         '''
         Test that API url for testing endpoint is selected if value given to
         select_api_url is True i.e. if clinvar_testing = True
         '''
-        url = select_api_url(True)
-        assert url == "https://submit.ncbi.nlm.nih.gov/apitest/v1/submissions"
-    
+        assert select_api_url(True) == "https://submit.ncbi.nlm.nih.gov/apite"\
+            "st/v1/submissions"
+
     def test_make_headers_works(self):
         '''
         Test that headers are constructed correctly
         '''
-        headers = make_headers(self.api_key)
-        assert headers == {
+        assert make_headers(self.api_key) == {
             "SP-API-KEY": 'xxxxxxxx',
             "Content-type": "application/json"
         }
-    
+
     def test_make_headers_with_non_string_input(self):
         '''
         Check TypeError raised when non string input to make_headers
         '''
         with pytest.raises(TypeError):
-            error = make_headers(12345)
+            make_headers(12345)
 
 
 if __name__ == "__main__":
