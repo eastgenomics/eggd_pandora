@@ -22,7 +22,7 @@ def submission_status_check(submission_id, headers, api_url):
     url = os.path.join(api_url, submission_id, "actions")
     response = requests.get(url, headers=headers)
     response_content = response.content.decode("UTF-8")
-    for k,v in response.headers.items():
+    for k, v in response.headers.items():
         print(f"{k}: {v}")
     print(response_content)
     if response.status_code not in [200]:
@@ -189,6 +189,7 @@ def main():
             api_url,
             1
         )
+
 
 if __name__ == "__main__":
     main()

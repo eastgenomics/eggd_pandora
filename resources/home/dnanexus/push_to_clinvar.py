@@ -4,6 +4,7 @@ from requests.adapters import HTTPAdapter, Retry
 import argparse
 import os.path
 
+
 def make_headers(api_key: str):
     '''
     Construct headers using the contents of a file containing the API key
@@ -18,6 +19,7 @@ def make_headers(api_key: str):
             "Content-type": "application/json"
         }
     return headers
+
 
 def select_api_url(testing):
     '''
@@ -40,6 +42,7 @@ def select_api_url(testing):
             "specify whether this is a test run or not."
         )
     return api_url
+
 
 def clinvar_api_request(url, header, data):
     '''
@@ -69,6 +72,7 @@ def clinvar_api_request(url, header, data):
     response = s.post(url, data=json.dumps(clinvar_data), headers=header)
     return response
 
+
 def write_response_to_file(local_id, response):
     '''
     Write the response of the ClinVar API submission to a file. This script
@@ -96,6 +100,7 @@ def write_response_to_file(local_id, response):
     else:
         with open('submission_ids.txt', 'a', encoding='utf-8') as f:
             f.write(f'{local_id}\tSubmission_error_check_logs\n')
+
 
 def main():
     '''
