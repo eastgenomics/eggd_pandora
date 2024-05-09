@@ -6,6 +6,7 @@ import requests
 import pandas as pd
 from push_to_clinvar import make_headers, select_api_url
 
+
 def submission_status_check(submission_id, headers, api_url):
     '''
     Queries ClinVar API about a submission ID to obtain more details about its
@@ -42,7 +43,7 @@ def submission_status_check(submission_id, headers, api_url):
         print("Status 'responses' field had no items, check back later")
     else:
         print(
-            "Status response had one or more responses, attempting to "\
+            "Status response had one or more responses, attempting to "
             "retrieve any files listed"
         )
         summary_files = responses[0]["files"]
@@ -62,6 +63,7 @@ def submission_status_check(submission_id, headers, api_url):
 
     return status_response
 
+
 def get_accession_id(api_response):
     '''
     Check if clinvar accession ID is present in response dict, if not report
@@ -74,7 +76,9 @@ def get_accession_id(api_response):
     '''
     print(f"response is {api_response}")
     if "clinvarAccession" in api_response["submissions"][0]['identifiers']:
-        accession = api_response["submissions"][0]["identifiers"]["clinvarAccession"]
+        accession = api_response["submissions"][
+            0
+            ]["identifiers"]["clinvarAccession"]
     else:
         accession = None
         print(
@@ -84,6 +88,7 @@ def get_accession_id(api_response):
         )
 
     return accession
+
 
 def write_accession_id_to_file(local_id, accession):
     '''
@@ -106,7 +111,12 @@ def write_accession_id_to_file(local_id, accession):
     with open('accession_ids.txt', 'a', encoding='utf-8') as f:
         f.write(f'{local_id}\t{accession}\n')
 
-def run_submission_status_check(local_id, submission_id, headers, api_url, counter):
+
+def run_submission_status_check(local_id,
+                                submission_id,
+                                headers,
+                                api_url,
+                                counter):
     '''
     Run the submission status check, if accession_id is returned, quit function
     if not, wait 5 mins, run again
@@ -155,7 +165,6 @@ def main():
 
     headers = make_headers(api_key)
     api_url = select_api_url(args.clinvar_testing)
-
 
     if args.submission_file:
         with open(args.submission_file) as f:

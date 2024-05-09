@@ -2,13 +2,14 @@ import pandas as pd
 import json
 import argparse
 
+
 def extract_clinvar_information(variant):
     '''
     Extract information from variant CSV and reformat into dictionary.
     Inputs:
         variant: row from variant dataframe with data for one variant
     outputs:
-        clinvar_dict: dictionary of data to submit to clinvar 
+        clinvar_dict: dictionary of data to submit to clinvar
     '''
     clinical_significance = check_clinical_significance(
         variant["Germline classification"]
@@ -18,9 +19,9 @@ def extract_clinvar_information(variant):
 
     clinvar_dict = {
         'assertionCriteria': {
-            'url': 'https://submit.ncbi.nlm.nih.gov/api/2.0/files/kf4l0sn8/uk-'\
-                'practice-guidelines-for-variant-classification-v4-01-2020.pd'\
-                'f/?format=attachment'
+            'url': 'https://submit.ncbi.nlm.nih.gov/api/2.0/files/kf4l0sn8/uk-'
+                'practice-guidelines-for-variant-classification-v4-01-2020.pdf'
+                '/?format=attachment'
             },
         'clinvarSubmission': [{
             'clinicalSignificance': {
@@ -60,16 +61,17 @@ def extract_clinvar_information(variant):
 
     return clinvar_dict
 
+
 def check_clinical_significance(clinical_significance_description):
     '''
     Tests that the value for clinical significance is valid according to what
     is accepted by ClinVar's API
     Inputs:
-        clinical_significance_description: 'Germline classification' from 
+        clinical_significance_description: 'Germline classification' from
         variant CSV
     Outputs:
-        clinical_significance_description: 'Germline classification' from 
-        variant CSV, validated to check it is compatible with ClinVar 
+        clinical_significance_description: 'Germline classification' from
+        variant CSV, validated to check it is compatible with ClinVar
     '''
 
     clinical_significance_valid = [
@@ -112,6 +114,7 @@ def check_clinical_significance(clinical_significance_description):
 
     return clinical_significance_description
 
+
 def check_comment(comment):
     '''
     Convert empty comments to "None" string that is a valid input to ClinVar.
@@ -123,6 +126,7 @@ def check_comment(comment):
     if str(comment) == "nan":
         comment = "None"
     return comment
+
 
 def check_assembly(ref_genome):
     '''
@@ -154,6 +158,7 @@ def check_assembly(ref_genome):
         )
     return assembly
 
+
 def if_nuh(organisation_id, clinvar_dict):
     '''
     Format submission correctly if this is an NUH case
@@ -176,6 +181,7 @@ def if_nuh(organisation_id, clinvar_dict):
             " option.\nValid options:\n288359 - CUH\n509428 - NUH"
         )
     return clinvar_dict
+
 
 def main():
     '''

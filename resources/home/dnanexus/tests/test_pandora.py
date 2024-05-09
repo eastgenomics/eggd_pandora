@@ -19,7 +19,7 @@ from pull_from_csv import (
     check_assembly,
     if_nuh
 )
-from push_to_clinvar import(
+from push_to_clinvar import (
    select_api_url,
    make_headers
 )
@@ -122,11 +122,10 @@ class TestDecipher():
                 "heterozygous",
                 "structural_variant"
             )
-            
             if variant_dict_list is not None:
                 for variant_dict in variant_dict_list:
                     variant_list.append(variant_dict)
-        print(variant_list)
+
         # Assert that the variants have been worked out correctly and that the
         # homozygous variants have not been added to the list twice
         assert len(variant_list) == 6
@@ -135,96 +134,97 @@ class TestDecipher():
             assert variant in [
                 {'data': {'type': 'Variant',
                 'attributes': {
-                    'person_id': 123,
-                    'variant_class': 'structural_variant',
-                    'assembly': 'GRCh38',
-                    'chr': '12',
-                    'start': '21912765',
-                    'ref_sequence': 'G',
-                    'alt_sequence': 'GAA',
-                    'inheritance': 'unknown',
-                    'genotype': 'heterozygous',
-                    'can_be_public': False
-                    }
-                }
-                },
-                {'data': {'type': 'Variant',
-                'attributes': {
-                    'person_id': 123,
-                    'variant_class': 'structural_variant',
-                    'assembly': 'GRCh38',
-                    'chr': '12',
-                    'start': '21912765',
-                    'ref_sequence': 'G',
-                    'alt_sequence': 'GA',
-                    'inheritance': 'unknown',
-                    'genotype': 'heterozygous',
-                    'can_be_public': False
-                    }
-                }
-                },
-                {'data': {'type': 'Variant',
-                'attributes': {
-                    'person_id': 123,
-                    'variant_class':
-                    'structural_variant',
-                    'assembly': 'GRCh38',
-                    'chr': '1',
-                    'start': '931131',
-                    'ref_sequence': 'C',
-                    'alt_sequence': 'CCCCT',
-                    'inheritance': 'unknown',
-                    'genotype': 'heterozygous',
-                    'can_be_public': False
+                            'person_id': 123,
+                            'variant_class': 'structural_variant',
+                            'assembly': 'GRCh38',
+                            'chr': '12',
+                            'start': '21912765',
+                            'ref_sequence': 'G',
+                            'alt_sequence': 'GAA',
+                            'inheritance': 'unknown',
+                            'genotype': 'heterozygous',
+                            'can_be_public': False
                         }
                     }
                 },
                 {'data': {'type': 'Variant',
                 'attributes': {
-                    'person_id': 123,
-                    'variant_class': 'structural_variant',
-                    'assembly': 'GRCh38',
-                    'chr': '1',
-                    'start': '927003',
-                    'ref_sequence': 'C',
-                    'alt_sequence': 'T',
-                    'inheritance': 'unknown',
-                    'genotype': 'heterozygous',
-                    'can_be_public': False
+                            'person_id': 123,
+                            'variant_class': 'structural_variant',
+                            'assembly': 'GRCh38',
+                            'chr': '12',
+                            'start': '21912765',
+                            'ref_sequence': 'G',
+                            'alt_sequence': 'GA',
+                            'inheritance': 'unknown',
+                            'genotype': 'heterozygous',
+                            'can_be_public': False
                         }
                     }
                 },
                 {'data': {'type': 'Variant',
                 'attributes': {
-                    'person_id': 123,
-                    'variant_class': 'structural_variant',
-                    'assembly': 'GRCh38',
-                    'chr': '12',
-                    'start': '21912765',
-                    'ref_sequence': 'G',
-                    'alt_sequence': 'GTTT',
-                    'inheritance': 'unknown',
-                    'genotype': 'heterozygous',
-                    'can_be_public': False
+                            'person_id': 123,
+                            'variant_class':
+                            'structural_variant',
+                            'assembly': 'GRCh38',
+                            'chr': '1',
+                            'start': '931131',
+                            'ref_sequence': 'C',
+                            'alt_sequence': 'CCCCT',
+                            'inheritance': 'unknown',
+                            'genotype': 'heterozygous',
+                            'can_be_public': False
                         }
                     }
                 },
                 {'data': {'type': 'Variant',
                 'attributes': {
-                    'person_id': 123,
-                    'variant_class': 'structural_variant',
-                    'assembly': 'GRCh38',
-                    'chr': '12',
-                    'start': '21912765',
-                    'ref_sequence': 'G',
-                    'alt_sequence': 'GT',
-                    'inheritance': 'unknown',
-                    'genotype': 'heterozygous',
-                    'can_be_public': False
+                        'person_id': 123,
+                        'variant_class': 'structural_variant',
+                        'assembly': 'GRCh38',
+                        'chr': '1',
+                        'start': '927003',
+                        'ref_sequence': 'C',
+                        'alt_sequence': 'T',
+                        'inheritance': 'unknown',
+                        'genotype': 'heterozygous',
+                        'can_be_public': False
+                        }
+                    }
+                },
+                {'data': {'type': 'Variant',
+                'attributes': {
+                            'person_id': 123,
+                            'variant_class': 'structural_variant',
+                            'assembly': 'GRCh38',
+                            'chr': '12',
+                            'start': '21912765',
+                            'ref_sequence': 'G',
+                            'alt_sequence': 'GTTT',
+                            'inheritance': 'unknown',
+                            'genotype': 'heterozygous',
+                            'can_be_public': False
+                        }
+                    }
+                },
+                {'data': {'type': 'Variant',
+                'attributes': {
+                            'person_id': 123,
+                            'variant_class': 'structural_variant',
+                            'assembly': 'GRCh38',
+                            'chr': '12',
+                            'start': '21912765',
+                            'ref_sequence': 'G',
+                            'alt_sequence': 'GT',
+                            'inheritance': 'unknown',
+                            'genotype': 'heterozygous',
+                            'can_be_public': False
                         }
                     }
                 }
             ]
+
 
 class TestOpenCGA():
     '''
@@ -244,14 +244,27 @@ class TestOpenCGA():
                 ]
             }
     interpretation = [
-        {'type': "INDEL", "studies": [
-            {"samples": [{"data": ["0/1"]}],
-             "files": [{"call": {"variantId": "1:10108:C:CT"}}]
-            }]
+        {
+        'type': "INDEL",
+        "studies": [
+                {"samples": [
+                    {"data": ["0/1"]}
+                    ],
+                "files": [
+                    {"call": {"variantId": "1:10108:C:CT"}}
+                    ]
+                }
+            ]
         },
-        {'type': "SNV", 'id': "1:927003:C:T", "studies": [
-            {"samples":[{'data': ['1|1']}]},
-        ]
+        {
+        'type': "SNV",
+        'id': "1:927003:C:T",
+        "studies": [
+                {"samples":[
+                    {'data': ['1|1']}
+                    ]
+                },
+            ]
         }
     ]
 
@@ -299,11 +312,13 @@ class TestOpenCGA():
         'sex': "46_xy",
         'clinical_reference': "12345",
         'phenotype_list': ["HP:0000119", "HP:0000121", "HP:0000377"],
-        'variant_list': [{
-            'variant_id': "1:10108:C:CT",
+        'variant_list': [
+            {'variant_id': "1:10108:C:CT",
             "type": 'INDEL',
-            'zygosity': '0/1'}]
+            'zygosity': '0/1'}
+            ]
         }
+
 
 class TestCSV():
     '''
@@ -343,8 +358,8 @@ class TestCSV():
 
         assert clinvar_json == ({
             'assertionCriteria': {
-                'url': 'https://submit.ncbi.nlm.nih.gov/api/2.0/files/kf4l0sn8'\
-                    '/uk-practice-guidelines-for-variant-classification-v4-01'\
+                'url': 'https://submit.ncbi.nlm.nih.gov/api/2.0/files/kf4l0sn8'
+                    '/uk-practice-guidelines-for-variant-classification-v4-01'
                     '-2020.pdf/?format=attachment'
                 },
             'clinvarSubmission': [{
@@ -431,6 +446,7 @@ class TestCSV():
         '''
         with pytest.raises(ValueError):
             if_nuh(12345, {})
+
 
 class TestClinvar():
     '''
