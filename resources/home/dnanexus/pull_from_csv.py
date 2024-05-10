@@ -210,5 +210,6 @@ def main():
         with open(f"{prefix}_clinvar_data.json", 'w', encoding='utf-8') as f:
             json.dump(clinvar_dict, f, ensure_ascii=False, indent=4)
 
+
 if __name__ == "__main__":
     main()

@@ -183,8 +183,7 @@ def main():
                 row["Local_ID"],
                 row["Submission_ID"],
                 headers,
-                api_url,
-                1
+                api_url
             )
 
     if args.submission_id:
@@ -192,8 +191,7 @@ def main():
             args.local_id,
             args.submission_id,
             headers,
-            api_url,
-            1
+            api_url
         )
 
 

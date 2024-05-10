@@ -1,4 +1,4 @@
-import json 
+import json
 import requests
 from requests.adapters import HTTPAdapter, Retry
 import argparse
@@ -51,7 +51,6 @@ def clinvar_api_request(url, header, data):
         url (str): API endpoint URL
         header (dict): headers for API call
         data (dict): clinvar data to submit
-    
     Returns:
         response: API response object
     '''
@@ -138,6 +137,7 @@ def main():
     local_id = data["clinvarSubmission"][0]["localID"]
 
     write_response_to_file(local_id, response_dict)
+
 
 if __name__ == "__main__":
     main()
