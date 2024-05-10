@@ -43,14 +43,21 @@ def submission_status_check(submission_id, headers, api_url):
         print("Status 'responses' field had no items, check back later")
     else:
         print(
-            "Status response had one or more responses, attempting to "
+            "Status response had a response, attempting to "
             "retrieve any files listed"
         )
-        summary_files = responses[0]["files"]
-        for file in summary_files:
-            url = file["url"]
-            print("GET " + url)
-            f_response = requests.get(url, headers=headers)
+        try:
+            f_url = responses[0]["files"][0]["url"]
+        except KeyError:
+            f_url = None
+            print(
+                "No API url for summary file found. Cannot query API for"
+                f" summary file based on response {responses}"
+            )
+
+        if f_url is not None:
+            print("GET " + f_url)
+            f_response = requests.get(f_url, headers=headers)
             f_response_content = f_response.content.decode("UTF-8")
             if f_response.status_code not in [200]:
                 raise RuntimeError(
@@ -58,7 +65,6 @@ def submission_status_check(submission_id, headers, api_url):
                     f"{f_response_content}"
                 )
             file_content = json.loads(f_response_content)
-            file["value"] = file_content
             status_response = file_content
 
     return status_response
@@ -75,11 +81,12 @@ def get_accession_id(api_response):
         accession: ClinVar accession ID, or None, if no accession ID found
     '''
     print(f"response is {api_response}")
-    if "clinvarAccession" in api_response["submissions"][0]['identifiers']:
-        accession = api_response["submissions"][
-            0
-            ]["identifiers"]["clinvarAccession"]
-    else:
+
+    try:
+        accession = api_response["submissions"][0]["identifiers"][
+            "clinvarAccession"
+        ]
+    except KeyError:
         accession = None
         print(
             "clinvarAccession field not found in response json. Submission may"
@@ -115,8 +122,7 @@ def write_accession_id_to_file(local_id, accession):
 def run_submission_status_check(local_id,
                                 submission_id,
                                 headers,
-                                api_url,
-                                counter):
+                                api_url):
     '''
     Run the submission status check, if accession_id is returned, quit function
     if not, wait 5 mins, run again
@@ -125,6 +131,7 @@ def run_submission_status_check(local_id,
     print(f"Querying {api_url} with {submission_id}")
     response = submission_status_check(submission_id, headers, api_url)
     accession_id = get_accession_id(response)
+    counter = 0
     if accession_id is not None:
         print(
             f"ClinVar accession ID found to be {accession_id}. \nWriting to "
@@ -132,15 +139,13 @@ def run_submission_status_check(local_id,
         )
         write_accession_id_to_file(local_id, accession_id)
     else:
-        while counter < 12:
+        while counter < 12 and accession_id is None:
             time.sleep(300)
+            response = submission_status_check(submission_id, headers, api_url)
             counter += 1
-            run_submission_status_check(
-                local_id, submission_id, headers, api_url, counter
-            )
             accession_id = get_accession_id(response)
-        write_accession_id_to_file(local_id, "NOT_FOUND")
-
+        
+        write_accession_id_to_file(local_id, str(accession_id))
 
 def main():
     '''
