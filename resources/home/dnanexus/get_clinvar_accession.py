@@ -138,14 +138,15 @@ def run_submission_status_check(local_id,
             "file..."
         )
         write_accession_id_to_file(local_id, accession_id)
+
     else:
         while counter < 12 and accession_id is None:
             time.sleep(300)
             response = submission_status_check(submission_id, headers, api_url)
             counter += 1
             accession_id = get_accession_id(response)
-        
         write_accession_id_to_file(local_id, str(accession_id))
+
 
 def main():
     '''
