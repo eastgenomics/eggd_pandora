@@ -2,24 +2,10 @@
 import pandas as pd
 import pytest
 import os
-from push_to_decipher import (
-    calculate_zygosity,
-    calculate_variant_type,
-    format_variant_json_for_decipher,
-)
-from pull_from_opencga import (
-    extract_proband_sex,
-    extract_proband_phenotypes,
-    extract_proband_variants,
-    format_required_data_into_case_json,
-)
-from pull_from_csv import (
-    check_clinical_significance,
-    extract_clinvar_information,
-    check_assembly,
-    if_nuh,
-)
-from push_to_clinvar import select_api_url, make_headers
+from push_to_decipher import *
+from pull_from_opencga import *
+from pull_from_csv import *
+from push_to_clinvar import *
 
 
 class TestDecipher:
@@ -402,14 +388,14 @@ class TestCSV:
         Check build 38 is selected if dias standard VEP build 38 reference
         genome is used
         """
-        assert check_assembly("GRCh38.p13") == "GRCh38"
+        assert determine_assembly("GRCh38.p13") == "GRCh38"
 
     def test_assembly_37(self):
         """
         Check build 37 is selected if dias standard VEP build 37 reference
         genome is used
         """
-        assert check_assembly("GRCh37.p13") == "GRCh37"
+        assert determine_assembly("GRCh37.p13") == "GRCh37"
 
     def test_assembly_invalid(self):
         """
@@ -417,26 +403,26 @@ class TestCSV:
         check_assembly function
         """
         with pytest.raises(RuntimeError):
-            check_assembly("incorrect_reference_genome.fa.gz")
+            determine_assembly("incorrect_reference_genome.fa.gz")
 
     def test_nuh_org_id_added(self):
         """
         Test that behalfOfID field is added if organisation is NUH
         """
-        assert if_nuh(509428, {}) == {"behalfOfID": 509428}
+        assert add_nuh_id(509428, {}) == {"behalfOfID": 509428}
 
     def test_no_change_if_cuh(self):
         """
         Test that clinvar_dict is not changed if organisation is CUH
         """
-        assert if_nuh(288359, {}) == {}
+        assert add_nuh_id(288359, {}) == {}
 
     def test_error_if_invalid_org_id(self):
         """
         Test that error is raised if organisation is invalid
         """
         with pytest.raises(ValueError):
-            if_nuh(12345, {})
+            add_nuh_id(12345, {})
 
 
 class TestClinvar:

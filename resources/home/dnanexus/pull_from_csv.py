@@ -15,8 +15,8 @@ def extract_clinvar_information(variant):
     clinical_significance = check_clinical_significance(
         variant["Germline classification"]
         )
-    comment = check_comment(variant["Comment on classification"])
-    assembly = check_assembly(variant["Ref genome"])
+    comment = convert_comment(variant["Comment on classification"])
+    assembly = determine_assembly(variant["Ref genome"])
 
     clinvar_dict = {
         'assertionCriteria': {
@@ -95,17 +95,7 @@ def check_clinical_significance(clinical_significance_description):
         "not provided"
     ]
 
-    if clinical_significance_description in clinical_significance_valid:
-        clinical_significance_description = clinical_significance_description
-
-    elif str(clinical_significance_description) == "nan":
-        raise RuntimeError(
-            "No value provided for clinical significance 'Germline "
-            "classification'. In order to submit to ClinVar this value must be"
-            " complete"
-        )
-
-    else:
+    if clinical_significance_description not in clinical_significance_valid:
         raise RuntimeError(
             f"Clinical significance value {clinical_significance_description} "
             "is not in the list of strings for clinical significance that will"
@@ -116,7 +106,7 @@ def check_clinical_significance(clinical_significance_description):
     return clinical_significance_description
 
 
-def check_comment(comment):
+def convert_comment(comment):
     '''
     Convert empty comments to "None" string that is a valid input to ClinVar.
     Inputs:
@@ -129,7 +119,7 @@ def check_comment(comment):
     return comment
 
 
-def check_assembly(ref_genome):
+def determine_assembly(ref_genome):
     '''
     Work out assembly from the reference genome used to by VEP to process the
     data
