@@ -1,6 +1,7 @@
 import pandas as pd
 import json
 import argparse
+from pathlib import Path
 
 
 def extract_clinvar_information(variant):
@@ -57,7 +58,7 @@ def extract_clinvar_information(variant):
         }],
     }
 
-    clinvar_dict = if_nuh(variant["Organisation ID"], clinvar_dict)
+    clinvar_dict = add_nuh_id(variant["Organisation ID"], clinvar_dict)
 
     return clinvar_dict
 
@@ -159,7 +160,7 @@ def check_assembly(ref_genome):
     return assembly
 
 
-def if_nuh(organisation_id, clinvar_dict):
+def add_nuh_id(organisation_id, clinvar_dict):
     '''
     Format submission correctly if this is an NUH case
     Inputs:
@@ -203,7 +204,7 @@ def main():
     for index, row in df.iterrows():
         clinvar_dict = extract_clinvar_information(row)
 
-        file_name = args.variant_csv.split('/')[-1].split('.')[0]
+        file_name = Path(args.variant_csv).stem
         print(file_name)
         prefix = file_name + '-' + row['Local ID']
 

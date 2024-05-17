@@ -3,6 +3,15 @@ set -exo pipefail #if any part goes wrong, job will fail
 pip install pytest
 dx-download-all-inputs
 
+# Check if running_mode is valid
+if [[ "clinvar decipher get_clinvar_accession" =~ \ $running_mode\  ]]
+then
+    echo Running mode $running_mode is not valid please choose one of the following:
+    echo 'clinvar', 'decipher', 'get_clinvar_accession'
+    exit 1
+fi
+
+# Run python scripts based on running_mode
 if [ "$running_mode" = "decipher" ]
 then
     pip install pyopencga
@@ -19,8 +28,8 @@ then
     DECIPHER_URL=$(cat decipher_url.txt)
 
     dx-jobutil-add-output link_to_patient_in_decipher "$DECIPHER_URL" --class=string
-
-elif [ "$running_mode" = "clinvar" ]
+fi
+if [ "$running_mode" = "clinvar" ]
 then
     pip install pandas
     python3 /home/dnanexus/pull_from_csv.py \
@@ -33,28 +42,20 @@ then
         --clinvar_json $json \
         --clinvar_testing $clinvar_testing
     done
-    mkdir -p /home/dnanexus/out/submission_id
-    mv submission_ids.txt /home/dnanexus/out/submission_id
-
+    mkdir -p /home/dnanexus/out/clinvar_submission_id
+    mv submission_ids.txt /home/dnanexus/out/clinvar_submission_id
+fi
+if [[ "clinvar get_clinvar_accession" =~ \ $running_mode\  ]]
+then
+    pip install pandas
     python3 /home/dnanexus/get_clinvar_accession.py \
         --submission_file /home/dnanexus/out/submission_id/submission_ids.txt \
         --clinvar_api_key /home/dnanexus/in/clinvar_api_key/*.txt
-    mkdir /home/dnanexus/out/accession_id
-    mv accession_ids.txt /home/dnanexus/out/accession_id
-
+    mkdir /home/dnanexus/out/clinvar_accession_id
+    mv accession_ids.txt /home/dnanexus/out/clinvar_accession_id
     dx-upload-all-outputs
-elif [ "$running_mode" = "get_clinvar_accession" ]
-then
-    python3 /home/dnanexus/get_clinvar_accession.py \
-        --submission_file /home/dnanexus/in/submission_ids_file/*.tsv \
-        --clinvar_api_key /home/dnanexus/in/clinvar_api_key/*.txt
-    mkdir /home/dnanexus/out/accession_id
-    mv accession_ids.txt /home/dnanexus/out/accession_id
-else
-    echo Running mode $running_mode is not valid please choose one of the following:
-    echo 'clinvar', 'decipher', 'get_clinvar_accession'
-    exit 1
 fi
+
 
 
 
