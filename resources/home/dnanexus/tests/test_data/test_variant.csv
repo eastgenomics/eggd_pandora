@@ -1,0 +1,2 @@
+Local ID,Linking ID,Gene symbol,Chromosome,Start,Reference allele,Alternate allele,Preferred condition name,Germline classification,Date last evaluated,Comment on classification,Collection method,Allele origin,Affected status,Ref genome,Organisation ID
+uid_xxxx,uid_yyyy,CFTR,7,117232266,C,CA,Cystic fibrosis,Pathogenic,2022-10-18,"Test comment",clinical testing,germline,yes,GRCh37.p13, 288359

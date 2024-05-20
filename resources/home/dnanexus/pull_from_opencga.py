@@ -122,6 +122,30 @@ def format_required_data_into_case_json(proband, sex, phenotypes, variants):
     return case_dict
 
 
+def extract_clinvar_information(proband):
+    '''
+    Retrieve "disorder" and "date evaluated" which would be required for API
+    submission to ClinVar if this functionality were added to eggd_pandora in
+    the future via a push_to_clinvar.py script.
+    This function is not currently called as this functionality does not exist.
+    If this functionality were added in the future, these variables would be
+    added to format_required_data_into_case_json() as inputs.
+        inputs:
+            proband (dict): the proband information from the OpenCGA analysis
+            client
+        outputs:
+            disorder (str): the primary (first listed) disorder for the proband
+            date_evaluated (str): the date of last edit to the interpretation
+    '''
+    if proband['disorders']:
+        disorder = proband['disorders'][0]['id']
+
+    if proband["modificationDate"]:
+        date_evaluated = proband["modificationDate"]
+
+    return disorder, date_evaluated
+
+
 def main():
     '''
     The entry point function of this script. Parses the command line arguments
