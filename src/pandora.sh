@@ -1,5 +1,6 @@
 #!/bin/bash
 set -exo pipefail #if any part goes wrong, job will fail
+
 pip install pytest
 dx-download-all-inputs
 
@@ -55,9 +56,4 @@ then
     mv accession_ids.txt /home/dnanexus/out/clinvar_accession_id
     dx-upload-all-outputs
 fi
-
-
-
-
-
 

@@ -53,8 +53,8 @@ class TestDecipher:
         """
         # The zygosity data will be under the key case['variant_list']
         zygosities = []
-        for variant in self.case["variant_list"]:
-            zygosity = calculate_zygosity(variant)
+        for variant in self.case['variant_list']:
+            zygosity = calculate_zygosity(variant, "46_xx")
             zygosities.append(zygosity)
 
         assert zygosities == [
@@ -64,6 +64,21 @@ class TestDecipher:
             "heterozygous",
             "homozygous",
         ]
+
+    @staticmethod
+    def test_hemizygous_variants():
+        '''
+        Test that calculate_zygosity function works for hemizygous variants
+        '''
+        # Create test variant on Y that should be hemizygous
+        test_variant = {
+            "variant_id": "Y:2790748:T:TA",
+            "type": "SNV",
+            "zygosity": "0/1"
+        }
+        sex = '46_xy'
+        test_zygosity = calculate_zygosity(test_variant, sex)
+        assert test_zygosity == "hemizygous"
 
     def test_variant_type_calculated_correctly(self):
         """
@@ -110,6 +125,7 @@ class TestDecipher:
 
         # Assert that the variants have been worked out correctly and that the
         # homozygous variants have not been added to the list twice
+
         assert len(variant_list) == 6
 
         for variant in variant_list:
@@ -465,7 +481,6 @@ class TestClinvar:
         """
         with pytest.raises(TypeError):
             make_headers(12345)
-
 
 if __name__ == "__main__":
     opencga = TestOpenCGA()
