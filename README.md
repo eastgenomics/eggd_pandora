@@ -25,7 +25,7 @@ eggd_pandora is a variant sharing system, which takes in variant data from a sou
 * `--clinvar_api_key`: (file) File containing ClinVar API key
 * `--submission_ids_file `: (file) File containing ClinVar submission IDs. Example format
 ```
-    Local_ID    Submission_ID
+    Local_ID    ClinVar_Submission_ID
     uid_1707758278575948778 SUB14474946
     uid_1707745813424903959 SUB14471647
 ```

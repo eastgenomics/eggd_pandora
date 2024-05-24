@@ -181,7 +181,7 @@ def main():
         for index, row in df.iterrows():
             run_submission_status_check(
                 row["Local_ID"],
-                row["Submission_ID"],
+                row["ClinVar_Submission_ID"],
                 headers,
                 api_url
             )
