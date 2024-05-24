@@ -48,11 +48,12 @@ def submission_status_check(submission_id, headers, api_url):
         )
         try:
             f_url = responses[0]["files"][0]["url"]
-        except KeyError:
+        except (KeyError, IndexError) as error:
             f_url = None
             print(
-                "No API url for summary file found. Cannot query API for"
-                f" summary file based on response {responses}"
+                f"Error retrieving files: {error}.\n No API url for summary"
+                "file found. Cannot query API for summary file based on "
+                f"response {responses}"
             )
 
         if f_url is not None:
