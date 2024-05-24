@@ -112,7 +112,7 @@ def write_accession_id_to_file(local_id, accession):
     if not os.path.exists('accession_ids.txt'):
         with open('accession_ids.txt', 'a', encoding='utf-8') as f:
             f.write(
-                'Local_ID\tClinVar_Submission_ID\n'
+                'Local_ID\tClinVar_Accession_ID\n'
             )
 
     with open('accession_ids.txt', 'a', encoding='utf-8') as f:
