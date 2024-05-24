@@ -51,7 +51,7 @@ then
         --submission_file /home/dnanexus/in/submission_ids_file/* \
         --clinvar_api_key /home/dnanexus/in/clinvar_api_key/*.txt \
         --clinvar_testing $clinvar_testing
-    mkdir /home/dnanexus/out/clinvar_accession_id
+    mkdir -p /home/dnanexus/out/clinvar_accession_id
     mv accession_ids.txt /home/dnanexus/out/clinvar_accession_id
     dx-upload-all-outputs
 else
