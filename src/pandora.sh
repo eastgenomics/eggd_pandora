@@ -4,14 +4,6 @@ set -exo pipefail #if any part goes wrong, job will fail
 pip install pytest
 dx-download-all-inputs
 
-# Check if running_mode is valid
-if [[ "clinvar decipher get_clinvar_accession" =~ \ $running_mode\  ]]
-then
-    echo Running mode $running_mode is not valid please choose one of the following:
-    echo 'clinvar', 'decipher', 'get_clinvar_accession'
-    exit 1
-fi
-
 # Run python scripts based on running_mode
 if [ "$running_mode" = "decipher" ]
 then
@@ -29,8 +21,7 @@ then
     DECIPHER_URL=$(cat decipher_url.txt)
 
     dx-jobutil-add-output link_to_patient_in_decipher "$DECIPHER_URL" --class=string
-fi
-if [ "$running_mode" = "clinvar" ]
+elif [ "$running_mode" = "clinvar" ]
 then
     pip install pandas
     python3 /home/dnanexus/pull_from_csv.py \
@@ -45,15 +36,27 @@ then
     done
     mkdir -p /home/dnanexus/out/clinvar_submission_id
     mv submission_ids.txt /home/dnanexus/out/clinvar_submission_id
-fi
-if [[ "clinvar get_clinvar_accession" =~ \ $running_mode\  ]]
-then
-    pip install pandas
+
     python3 /home/dnanexus/get_clinvar_accession.py \
-        --submission_file /home/dnanexus/out/submission_id/submission_ids.txt \
-        --clinvar_api_key /home/dnanexus/in/clinvar_api_key/*.txt
+    --submission_file /home/dnanexus/out/clinvar_submission_id/submission_ids.txt \
+    --clinvar_api_key /home/dnanexus/in/clinvar_api_key/*.txt \
+    --clinvar_testing $clinvar_testing
     mkdir /home/dnanexus/out/clinvar_accession_id
     mv accession_ids.txt /home/dnanexus/out/clinvar_accession_id
     dx-upload-all-outputs
+elif [ "$running_mode" = "get_clinvar_accession" ]
+then
+    pip install pandas
+    python3 /home/dnanexus/get_clinvar_accession.py \
+        --submission_file /home/dnanexus/in/submission_ids_file/* \
+        --clinvar_api_key /home/dnanexus/in/clinvar_api_key/*.txt \
+        --clinvar_testing $clinvar_testing
+    mkdir -p /home/dnanexus/out/clinvar_accession_id
+    mv accession_ids.txt /home/dnanexus/out/clinvar_accession_id
+    dx-upload-all-outputs
+else
+    echo Running mode $running_mode is not valid please choose one of the following:
+    echo 'clinvar', 'decipher', 'get_clinvar_accession'
+    exit 1
 fi
 

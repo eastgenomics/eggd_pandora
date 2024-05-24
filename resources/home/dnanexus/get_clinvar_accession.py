@@ -48,11 +48,12 @@ def submission_status_check(submission_id, headers, api_url):
         )
         try:
             f_url = responses[0]["files"][0]["url"]
-        except KeyError:
+        except (KeyError, IndexError) as error:
             f_url = None
             print(
-                "No API url for summary file found. Cannot query API for"
-                f" summary file based on response {responses}"
+                f"Error retrieving files: {error}.\n No API url for summary"
+                "file found. Cannot query API for summary file based on "
+                f"response {responses}"
             )
 
         if f_url is not None:
@@ -112,7 +113,7 @@ def write_accession_id_to_file(local_id, accession):
     if not os.path.exists('accession_ids.txt'):
         with open('accession_ids.txt', 'a', encoding='utf-8') as f:
             f.write(
-                'Local_ID\tClinVar_Submission_ID\n'
+                'Local_ID\tClinVar_Accession_ID\n'
             )
 
     with open('accession_ids.txt', 'a', encoding='utf-8') as f:
@@ -181,7 +182,7 @@ def main():
         for index, row in df.iterrows():
             run_submission_status_check(
                 row["Local_ID"],
-                row["Submission_ID"],
+                row["ClinVar_Submission_ID"],
                 headers,
                 api_url
             )
