@@ -39,7 +39,8 @@ then
 
     python3 /home/dnanexus/get_clinvar_accession.py \
     --submission_file /home/dnanexus/out/clinvar_submission_id/submission_ids.txt \
-    --clinvar_api_key /home/dnanexus/in/clinvar_api_key/*.txt
+    --clinvar_api_key /home/dnanexus/in/clinvar_api_key/*.txt \
+    --clinvar_testing $clinvar_testing
     mkdir /home/dnanexus/out/clinvar_accession_id
     mv accession_ids.txt /home/dnanexus/out/clinvar_accession_id
     dx-upload-all-outputs
@@ -48,7 +49,8 @@ then
     pip install pandas
     python3 /home/dnanexus/get_clinvar_accession.py \
         --submission_file /home/dnanexus/in/submission_ids_file/* \
-        --clinvar_api_key /home/dnanexus/in/clinvar_api_key/*.txt
+        --clinvar_api_key /home/dnanexus/in/clinvar_api_key/*.txt \
+        --clinvar_testing $clinvar_testing
     mkdir /home/dnanexus/out/clinvar_accession_id
     mv accession_ids.txt /home/dnanexus/out/clinvar_accession_id
     dx-upload-all-outputs
