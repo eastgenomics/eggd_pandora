@@ -162,7 +162,7 @@ def add_nuh_id(organisation_id, clinvar_dict):
     '''
     # If NUH
     if organisation_id == 509428:
-        clinvar_dict['behalfOfID'] = organisation_id
+        clinvar_dict['behalfOrgID'] = organisation_id
     # If CUH, no changes need to be made
     elif organisation_id == 288359:
         pass
