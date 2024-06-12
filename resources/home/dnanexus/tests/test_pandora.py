@@ -423,9 +423,9 @@ class TestCSV:
 
     def test_nuh_org_id_added(self):
         """
-        Test that behalfOfID field is added if organisation is NUH
+        Test that behalfOrgID field is added if organisation is NUH
         """
-        assert add_nuh_id(509428, {}) == {"behalfOfID": 509428}
+        assert add_nuh_id(509428, {}) == {"behalfOrgID": 509428}
 
     def test_no_change_if_cuh(self):
         """
