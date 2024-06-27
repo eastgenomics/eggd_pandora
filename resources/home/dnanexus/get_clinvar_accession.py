@@ -176,7 +176,7 @@ def main():
     if args.clinvar_testing in [True, 'true', 'True', 'TRUE']:
         print(
             "ClinVar testing set to true. As this run of eggd_pandora used the"
-            "test endpoint, so ClinVar no accession IDs will be generated. "
+            "test endpoint, so no ClinVar accession IDs will be generated. "
             "Exiting get_clinvar_accession.py script..."     
         )
         exit(0)
