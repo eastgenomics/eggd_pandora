@@ -173,6 +173,14 @@ def main():
     headers = make_headers(api_key)
     api_url = select_api_url(args.clinvar_testing)
 
+    if args.clinvar_testing in [True, 'true', 'True', 'TRUE']:
+        print(
+            "ClinVar testing set to true. As this run of eggd_pandora used the"
+            "test endpoint, so ClinVar no accession IDs will be generated. "
+            "Exiting get_clinvar_accession.py script..."     
+        )
+        exit(0)
+
     if args.submission_file:
         with open(args.submission_file) as f:
             df = pd.read_csv(f, delim_whitespace=True)

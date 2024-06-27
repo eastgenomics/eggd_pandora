@@ -19,11 +19,6 @@ def extract_clinvar_information(variant):
     assembly = determine_assembly(variant["Ref genome"])
 
     clinvar_dict = {
-        'assertionCriteria': {
-            'url': 'https://submit.ncbi.nlm.nih.gov/api/2.0/files/kf4l0sn8/uk-'
-                'practice-guidelines-for-variant-classification-v4-01-2020.pdf'
-                '/?format=attachment'
-            },
         'clinvarSubmission': [{
             'clinicalSignificance': {
                 'clinicalSignificanceDescription': clinical_significance,
@@ -58,7 +53,9 @@ def extract_clinvar_information(variant):
         }],
     }
 
-    clinvar_dict = add_nuh_id(variant["Organisation ID"], clinvar_dict)
+    clinvar_dict = add_lab_specific_guidelines(
+        variant["Organisation ID"], clinvar_dict
+    )
 
     return clinvar_dict
 
@@ -150,22 +147,29 @@ def determine_assembly(ref_genome):
     return assembly
 
 
-def add_nuh_id(organisation_id, clinvar_dict):
+def add_lab_specific_guidelines(organisation_id, clinvar_dict):
     '''
     Format submission correctly if this is an NUH case
     Inputs:
         organisation_id (int): ClinVar organisation ID for submitting lab (CUH
         or NUH)
         clinvar_dict (dict): dictionary of info to submit to clinvar
-    Ouputs:
-        clinvar_dict (dict): dictionary of info to submit to clinvar
+    Outputs:
+        clinvar_dict (dict): dictionary of info to submit to clinvar, edited
+        to add url to assertion criteria, and behalf org ID for NUH
     '''
     # If NUH
     if organisation_id == 509428:
-        clinvar_dict['behalfOrgID'] = organisation_id
-    # If CUH, no changes need to be made
+        clinvar_dict['assertionCriteria'] = {'url': 'https://submit.ncbi.nlm.n'
+        'ih.gov/api/2.0/files/iptxgqju/uk-practice-guidelines-for-variant-clas'
+        'sification-v4-01-2020.pdf/?format=attachment'}
+
+    # If CUH
     elif organisation_id == 288359:
-        pass
+        clinvar_dict['assertionCriteria'] = {'url': 'https://submit.ncbi.nlm.n'
+        'ih.gov/api/2.0/files/kf4l0sn8/uk-practice-guidelines-for-variant-clas'
+        'sification-v4-01-2020.pdf/?format=attachment'}
+
     else:
         raise ValueError(
             f"Value given for organisation ID {organisation_id} is not a valid"

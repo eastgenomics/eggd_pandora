@@ -421,24 +421,34 @@ class TestCSV:
         with pytest.raises(RuntimeError):
             determine_assembly("incorrect_reference_genome.fa.gz")
 
-    def test_nuh_org_id_added(self):
+    def test_nuh_org_url_added(self):
         """
         Test that behalfOrgID field is added if organisation is NUH
         """
-        assert add_nuh_id(509428, {}) == {"behalfOrgID": 509428}
+        assert add_lab_specific_guidelines(509428, {}) == {
+            "assertionCriteria":{
+                'url': 'https://submit.ncbi.nlm.nih.gov/api/2.0/files/iptxgqju'
+                '/uk-practice-guidelines-for-variant-classification-v4-01-2020'
+                '.pdf/?format=attachment'}
+        }
 
     def test_no_change_if_cuh(self):
         """
         Test that clinvar_dict is not changed if organisation is CUH
         """
-        assert add_nuh_id(288359, {}) == {}
+        assert add_lab_specific_guidelines(288359, {}) == {
+            "assertionCriteria":{
+                'url': 'https://submit.ncbi.nlm.nih.gov/api/2.0/files/kf4l0sn8'
+                '/uk-practice-guidelines-for-variant-classification-v4-01-2020'
+                '.pdf/?format=attachment'}
+        }
 
     def test_error_if_invalid_org_id(self):
         """
         Test that error is raised if organisation is invalid
         """
-        with pytest.raises(ValueError):
-            add_nuh_id(12345, {})
+        with pytest.raises(ValueError) as error:
+            add_lab_specific_guidelines(12345, {})
 
 
 class TestClinvar:
