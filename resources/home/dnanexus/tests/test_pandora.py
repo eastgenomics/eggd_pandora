@@ -432,7 +432,7 @@ class TestCSV:
                 '.pdf/?format=attachment'}
         }
 
-    def test_no_change_if_cuh(self):
+    def test_cuh_org_url_added(self):
         """
         Test that clinvar_dict is not changed if organisation is CUH
         """
@@ -447,7 +447,7 @@ class TestCSV:
         """
         Test that error is raised if organisation is invalid
         """
-        with pytest.raises(ValueError) as error:
+        with pytest.raises(ValueError):
             add_lab_specific_guidelines(12345, {})
 
 
