@@ -52,11 +52,7 @@ then
         --clinvar_api_key /home/dnanexus/in/clinvar_api_key/*.txt \
         --clinvar_testing $clinvar_testing
     mkdir -p /home/dnanexus/out/clinvar_accession_id
-    # If file exists move to output directory
-    if [ -f accession_ids.txt ]
-    then
-        mv accession_ids.txt /home/dnanexus/out/clinvar_accession_id
-    fi
+    mv accession_ids.txt /home/dnanexus/out/clinvar_accession_id
     dx-upload-all-outputs
 else
     echo Running mode $running_mode is not valid please choose one of the following:
