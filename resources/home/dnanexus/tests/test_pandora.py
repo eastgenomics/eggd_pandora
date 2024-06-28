@@ -423,7 +423,7 @@ class TestCSV:
 
     def test_nuh_org_url_added(self):
         """
-        Test that behalfOrgID field is added if organisation is NUH
+        Test that correct guidelines url is added for NUH
         """
         assert add_lab_specific_guidelines(509428, {}) == {
             "assertionCriteria":{
@@ -434,7 +434,7 @@ class TestCSV:
 
     def test_cuh_org_url_added(self):
         """
-        Test that clinvar_dict is not changed if organisation is CUH
+        Test that correct guidelines url is added for CUH
         """
         assert add_lab_specific_guidelines(288359, {}) == {
             "assertionCriteria":{

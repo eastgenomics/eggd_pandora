@@ -156,7 +156,7 @@ def add_lab_specific_guidelines(organisation_id, clinvar_dict):
         clinvar_dict (dict): dictionary of info to submit to clinvar
     Outputs:
         clinvar_dict (dict): dictionary of info to submit to clinvar, edited
-        to add url to assertion criteria, and behalf org ID for NUH
+        to add url for assertion criteria which is specific to CUH or NUH
     '''
     # If NUH
     if organisation_id == 509428:
