@@ -2,11 +2,15 @@
     "name": "eggd_pandora",
     "title": "eggd_pandora",
     "summary": "Takes patient and variant information and shares with online databases",
-    "whatsNew": "* 2.0.0 Updated to take data from a csv file and input to ClinVar\n * 2.0.1 bugfix for incorrect field name",
+    "whatsNew": {
+      "v2.0.0": "Updated to take data from a csv file and input to ClinVar",
+      "v2.0.1": "bugfix for incorrect field name",
+      "v2.0.2": "add NUH ACGS guidelines link"
+      },
     "dxapi": "2.0.0",
-    "version": "2.0.1",
+    "version": "2.0.2",
     "properties": {
-      "githubRelease": "v2.0.1"
+      "githubRelease": "v2.0.2"
     },
     "inputSpec": [
         {
